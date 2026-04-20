@@ -24,7 +24,7 @@
     #status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
     #status-dot.online{background:var(--green);box-shadow:0 0 5px var(--green);}
     .header-right{display:flex;gap:5px;flex-shrink:0;}
-    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:18px;color:var(--text);padding:18px 28px;font-size:1.15rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);white-space:nowrap;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0;box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
+    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:22px;color:var(--text);padding:22px 36px;font-size:1.3rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);white-space:nowrap;font-weight:800;display:flex;align-items:center;justify-content:center;gap:12px;flex-shrink:0;box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
     .hbtn:active{transform:scale(0.92);}
     .hbtn:hover{border-color:var(--accent2);transform:translateY(-3px);box-shadow: 0 10px 30px rgba(123,92,250,0.4);background:var(--surface);}
     
@@ -38,6 +38,8 @@
 
     .hbtn.next-btn{color:var(--accent);border-color:rgba(255,61,107,0.3);background:rgba(255,61,107,0.05);}
     .hbtn.next-btn:hover{background:var(--accent);color:#fff;box-shadow: 0 10px 30px rgba(255,61,107,0.4);}
+    
+    .hbtn.close-btn { width: 50px; padding: 0; }
 
     #premium-banner{background:linear-gradient(135deg,rgba(245,197,24,.10),rgba(230,168,23,.05));border-bottom:1px solid rgba(245,197,24,.2);padding:6px 14px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--gold);flex-shrink:0;}
     #premium-banner span{color:var(--muted);font-size:.72rem;}
@@ -90,8 +92,8 @@
     #call-status{position:absolute;top:10px;left:0;right:0;text-align:center;color:#fff;font-size:0.9rem;font-weight:900;z-index:2;text-shadow: 0 2px 20px rgba(0,0,0,1);pointer-events: none;}
     
     #call-controls{display:flex;justify-content:center;gap:24px;padding:32px;background:#0d0d0f;border-top:1px solid rgba(255,255,255,0.05);flex-shrink: 0;}
-    .ctrl-btn{width:70px;height:70px;border-radius:24px;border:none;cursor:pointer;font-size:1.6rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);box-shadow: 0 12px 30px rgba(0,0,0,0.4);}
-    .ctrl-btn svg { width: 28px; height: 28px; fill: currentColor; }
+    .ctrl-btn{width:82px;height:82px;border-radius:28px;border:none;cursor:pointer;font-size:1.8rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);box-shadow: 0 12px 30px rgba(0,0,0,0.4);}
+    .ctrl-btn svg { width: 34px; height: 34px; fill: currentColor; }
     .ctrl-btn:hover{transform:scale(1.1) translateY(-4px);background:var(--border);box-shadow: 0 18px 40px rgba(0,0,0,0.6);}
     .ctrl-btn.active{background:rgba(255,255,255,0.15);color:var(--accent);}
     .ctrl-btn.end{background:#ff3b30;color:#fff;box-shadow: 0 12px 35px rgba(255,59,48,0.5);}
@@ -137,7 +139,7 @@
     .notify-name { font-weight: 800; font-size: 1rem; color: var(--accent); margin-bottom: 2px; }
     .notify-type { font-size: 0.75rem; color: var(--muted); }
     .notify-btns { display: flex; gap: 10px; }
-    .nbtn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; color: #fff; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+    .nbtn { width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer; color: #fff; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
     .nbtn:hover { transform: scale(1.1); }
     .nbtn.accept { background: var(--green); }
     .nbtn.reject { background: var(--accent); }
@@ -182,14 +184,14 @@
 
     #typing-bar{padding:3px 14px;font-size:.73rem;color:var(--muted);font-style:italic;height:20px;flex-shrink:0;background:var(--bg);}
 
-    #input-area{background:var(--surface);border-top:1px solid var(--border);padding:9px 10px;display:flex;gap:6px;align-items:center;flex-shrink:0;}
-    .ibtn{background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--muted);width:36px;height:36px;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    #input-area{background:var(--surface);border-top:1px solid var(--border);padding:12px 14px;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+    .ibtn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--muted);width:48px;height:48px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
     .ibtn:hover{border-color:var(--accent2);color:var(--text);}
     .ibtn.recording{border-color:var(--accent);color:var(--accent);animation:pulse 1s infinite;}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-    #msg-input{flex:1;padding:9px 13px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s;min-width:0;}
+    #msg-input{flex:1;padding:12px 18px;border-radius:24px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;transition:border-color .2s;min-width:0;}
     #msg-input:focus{border-color:var(--accent2);}
-    #send-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;color:#fff;padding:9px 13px;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;flex-shrink:0;transition:opacity .2s;}
+    #send-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;padding:12px 20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;flex-shrink:0;transition:opacity .2s;}
     #send-btn:hover{opacity:.85;}
     #photo-input{display:none;}
 
@@ -250,10 +252,11 @@
         border-radius: 30px 30px 0 0;
         resize: none;
       }
-      .hbtn{padding:16px 12px;font-size:1.1rem;flex:1;}
-      .ctrl-btn{width:56px;height:56px;font-size:1.3rem;}
+      .hbtn{padding:20px 14px;font-size:1.2rem;flex:1;}
+      .hbtn.close-btn { flex: 0 0 50px; }
+      .ctrl-btn{width:68px;height:68px;font-size:1.5rem;}
       #header{padding:12px 10px;flex-wrap:wrap;}
-      .header-right{width:100%;justify-content:center;margin-top:8px;}
+      .header-right{width:100%;justify-content:center;margin-top:8px; gap: 8px;}
     }
   </style>
 </head>
@@ -282,7 +285,7 @@
           <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
           Next
         </button>
-        <button class="hbtn" onclick="goHome()">✕</button>
+        <button class="hbtn close-btn" onclick="goHome()">✕</button>
       </div>
     </div>
 
@@ -521,14 +524,8 @@
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
-      { urls: 'stun:stun.ekiga.net' },
-      { urls: 'stun:stun.ideasip.com' },
-      { urls: 'stun:stun.rixos.com' },
-      { urls: 'stun:stun.schlund.de' },
-      { urls: 'stun:stun.voiparound.com' },
-      { urls: 'stun:stun.voipbuster.com' },
-      { urls: 'stun:stun.voipstunt.com' },
-      { urls: 'stun:stun.voxgratia.org' }
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      { urls: 'stun:stun.services.mozilla.com' }
     ] 
   };
 
@@ -634,6 +631,9 @@
     iceCandidatesQueue = [];
     if (sendSignal) socket.emit('call-end');
     if (!quiet) addMessage('Call ended.', 'system', false, false, 0, false);
+    
+    // Reset call status
+    document.getElementById('call-status').textContent = 'Call Ended';
   }
 
   function toggleMute() {
@@ -845,39 +845,85 @@
     }
   }
 
-  socket.on('call-reject', () => { endCall(false); addMessage('Call was declined.', 'system', false, false, 0, false); });
-  socket.on('call-end', () => { endCall(false); });
+  socket.on('call-reject', () => { endCall(false, true); addMessage('Call was declined.', 'system', false, false, 0, false); });
+  socket.on('call-end', () => { endCall(false, false); });
 
   // Draggable & Resizable logic
+  // Draggable & Resizable logic with Touch Support
   function setupResponsiveTools(el, dragHandle, resizeHandle) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     
-    dragHandle.onmousedown = (e) => {
-      e = e || window.event; e.preventDefault();
-      pos3 = e.clientX; pos4 = e.clientY;
-      document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
-      document.onmousemove = (e) => {
-        e = e || window.event; e.preventDefault();
-        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-        pos3 = e.clientX; pos4 = e.clientY;
-        el.style.top = (el.offsetTop - pos2) + "px";
-        el.style.left = (el.offsetLeft - pos1) + "px";
+    const dragStart = (e) => {
+      if (window.innerWidth <= 650) return; // Disable drag on mobile fixed view
+      const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+      pos3 = clientX; pos4 = clientY;
+      
+      const onMove = (e) => {
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        pos1 = pos3 - clientX; pos2 = pos4 - clientY;
+        pos3 = clientX; pos4 = clientY;
+        
+        let newTop = el.offsetTop - pos2;
+        let newLeft = el.offsetLeft - pos1;
+        
+        // Boundaries
+        if (newTop < 0) newTop = 0;
+        if (newLeft < 0) newLeft = 0;
+        if (newTop + el.offsetHeight > window.innerHeight) newTop = window.innerHeight - el.offsetHeight;
+        if (newLeft + el.offsetWidth > window.innerWidth) newLeft = window.innerWidth - el.offsetWidth;
+
+        el.style.top = newTop + "px";
+        el.style.left = newLeft + "px";
         el.style.right = 'auto'; el.style.bottom = 'auto';
       };
+      
+      const onEnd = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+      };
+      
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onEnd);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onEnd);
     };
 
-    resizeHandle.onmousedown = (e) => {
-      e = e || window.event; e.preventDefault();
-      let startX = e.clientX, startY = e.clientY;
+    dragHandle.addEventListener('mousedown', dragStart);
+    dragHandle.addEventListener('touchstart', dragStart, { passive: false });
+
+    const resizeStart = (e) => {
+      const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+      let startX = clientX, startY = clientY;
       let startWidth = parseInt(document.defaultView.getComputedStyle(el).width, 10);
       let startHeight = parseInt(document.defaultView.getComputedStyle(el).height, 10);
       
-      document.onmousemove = (e) => {
-        el.style.width = (startWidth + e.clientX - startX) + 'px';
-        el.style.height = (startHeight + e.clientY - startY) + 'px';
+      const onMove = (e) => {
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        el.style.width = Math.max(300, (startWidth + clientX - startX)) + 'px';
+        el.style.height = Math.max(380, (startHeight + clientY - startY)) + 'px';
       };
-      document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; };
+      
+      const onEnd = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+      };
+      
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onEnd);
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onEnd);
     };
+
+    resizeHandle.addEventListener('mousedown', resizeStart);
+    resizeHandle.addEventListener('touchstart', resizeStart, { passive: false });
   }
   setupResponsiveTools(document.getElementById('call-panel'), document.getElementById('call-drag-handle'), document.getElementById('resize-handle'));
 </script>
