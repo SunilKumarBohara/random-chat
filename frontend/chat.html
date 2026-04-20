@@ -24,20 +24,20 @@
     #status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
     #status-dot.online{background:var(--green);box-shadow:0 0 5px var(--green);}
     .header-right{display:flex;gap:5px;flex-shrink:0;}
-    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:22px;color:var(--text);padding:22px 36px;font-size:1.3rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);white-space:nowrap;font-weight:800;display:flex;align-items:center;justify-content:center;gap:12px;flex-shrink:0;box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
-    .hbtn:active{transform:scale(0.92);}
+    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:24px;color:var(--text);padding:24px 42px;font-size:1.4rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);white-space:nowrap;font-weight:800;display:flex;align-items:center;justify-content:center;gap:14px;flex-shrink:0;box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
+    .hbtn:active{transform:scale(0.9);}
     .hbtn:hover{border-color:var(--accent2);transform:translateY(-3px);box-shadow: 0 10px 30px rgba(123,92,250,0.4);background:var(--surface);}
     
     .hbtn svg { width: 22px; height: 22px; fill: currentColor; }
     
     .hbtn.call-btn{color:var(--green);border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.05);}
-    .hbtn.call-btn:hover{background:var(--green);color:#000;box-shadow: 0 10px 30px rgba(0,229,160,0.4);}
+    .hbtn.call-btn:hover{background:var(--green);color:#000;box-shadow: 0 10px 40px rgba(0,229,160,0.6); transform: translateY(-5px) scale(1.05);}
     
     .hbtn.video-btn{color:#60a5fa;border-color:rgba(96,165,250,0.3);background:rgba(96,165,250,0.05);}
-    .hbtn.video-btn:hover{background:#60a5fa;color:#fff;box-shadow: 0 10px 30px rgba(96,165,250,0.4);}
+    .hbtn.video-btn:hover{background:#60a5fa;color:#fff;box-shadow: 0 10px 40px rgba(96,165,250,0.6); transform: translateY(-5px) scale(1.05);}
 
     .hbtn.next-btn{color:var(--accent);border-color:rgba(255,61,107,0.3);background:rgba(255,61,107,0.05);}
-    .hbtn.next-btn:hover{background:var(--accent);color:#fff;box-shadow: 0 10px 30px rgba(255,61,107,0.4);}
+    .hbtn.next-btn:hover{background:var(--accent);color:#fff;box-shadow: 0 10px 40px rgba(255,61,107,0.6); transform: translateY(-5px) scale(1.05);}
     
     .hbtn.close-btn { width: 50px; padding: 0; }
 
@@ -104,15 +104,25 @@
       position: absolute;
       bottom: 0;
       right: 0;
-      width: 30px;
-      height: 30px;
-      background: linear-gradient(135deg, transparent 50%, var(--accent2) 50%);
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, transparent 50%, var(--accent) 50%);
       cursor: nwse-resize;
-      z-index: 10;
-      opacity: 0.6;
-      transition: opacity 0.2s;
+      z-index: 200;
+      opacity: 0.8;
+      transition: opacity 0.2s, transform 0.2s;
+      border-radius: 0 0 28px 0;
     }
-    #resize-handle:hover { opacity: 1; }
+    #resize-handle:hover { opacity: 1; transform: scale(1.1); }
+    #resize-handle::after {
+      content: "⌟";
+      position: absolute;
+      bottom: 5px;
+      right: 8px;
+      color: #fff;
+      font-size: 20px;
+      font-weight: bold;
+    }
 
     #call-notify {
       display: none;
@@ -247,16 +257,18 @@
         left: 0;
         right: 0;
         width: 100% !important;
-        height: 60% !important;
-        z-index: 1000;
-        border-radius: 30px 30px 0 0;
+        height: 65% !important;
+        z-index: 2000;
+        border-radius: 40px 40px 0 0;
         resize: none;
       }
-      .hbtn{padding:20px 14px;font-size:1.2rem;flex:1;}
-      .hbtn.close-btn { flex: 0 0 50px; }
-      .ctrl-btn{width:68px;height:68px;font-size:1.5rem;}
+      .hbtn{padding:24px 16px;font-size:1.4rem;flex:1;}
+      .hbtn.close-btn { flex: 0 0 60px; }
+      .ctrl-btn{width:76px;height:76px;font-size:1.8rem;}
       #header{padding:12px 10px;flex-wrap:wrap;}
-      .header-right{width:100%;justify-content:center;margin-top:8px; gap: 8px;}
+      .header-right{width:100%;justify-content:center;margin-top:12px; gap: 12px;}
+      .ibtn { width: 56px; height: 56px; font-size: 1.4rem; }
+      #send-btn { padding: 14px 24px; font-size: 1.1rem; }
     }
   </style>
 </head>
@@ -581,16 +593,21 @@
     document.getElementById('notify-name').textContent = document.getElementById('partner-name').textContent || 'Stranger';
     document.getElementById('notify-type').textContent = (withVideo ? 'Video' : 'Voice') + ' Call Incoming...';
     document.getElementById('call-notify').classList.add('show');
+    ringtone.play().catch(e => console.log("Ringtone blocked:", e));
   }
 
   function rejectCall() {
     document.getElementById('call-notify').classList.remove('show');
+    ringtone.pause();
+    ringtone.currentTime = 0;
     socket.emit('call-reject');
     pendingOffer = null;
   }
 
   async function acceptCall() {
     document.getElementById('call-notify').classList.remove('show');
+    ringtone.pause();
+    ringtone.currentTime = 0;
     if (!pendingOffer) return;
     isVideoCall = pendingWithVideo;
     try {
@@ -618,22 +635,51 @@
   }
 
   let isCallActive = false;
+  const ringtone = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+  ringtone.loop = true;
 
   function endCall(sendSignal = true, quiet = false) {
-    if (!isCallActive) return;
+    console.log("Ending call. isCallActive:", isCallActive, "quiet:", quiet);
+    ringtone.pause();
+    ringtone.currentTime = 0;
+    
+    if (!isCallActive) {
+      cleanupCallUI();
+      return;
+    }
+    
     isCallActive = false;
     
-    if (pc) { pc.close(); pc = null; }
-    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    if (pc) {
+      pc.onicecandidate = null;
+      pc.ontrack = null;
+      pc.oniceconnectionstatechange = null;
+      pc.close();
+      pc = null;
+    }
+    
+    if (localStream) {
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+    }
+    
+    cleanupCallUI();
+    
+    if (sendSignal) socket.emit('call-end');
+    if (!quiet) addMessage('Call ended.', 'system', false, false, 0, false);
+  }
+
+  function cleanupCallUI() {
     document.getElementById('remote-video').srcObject = null;
     document.getElementById('local-video').srcObject = null;
     document.getElementById('call-panel').classList.remove('active');
+    document.getElementById('call-status').textContent = 'Disconnected';
     iceCandidatesQueue = [];
-    if (sendSignal) socket.emit('call-end');
-    if (!quiet) addMessage('Call ended.', 'system', false, false, 0, false);
     
-    // Reset call status
-    document.getElementById('call-status').textContent = 'Call Ended';
+    document.getElementById('mute-btn').classList.remove('active');
+    document.getElementById('cam-btn').classList.remove('active');
+    isMuted = false;
+    isCamOff = false;
   }
 
   function toggleMute() {
@@ -845,85 +891,69 @@
     }
   }
 
-  socket.on('call-reject', () => { endCall(false, true); addMessage('Call was declined.', 'system', false, false, 0, false); });
+  socket.on('call-reject', () => { endCall(false, true); addMessage('Stranger declined the call.', 'system', false, false, 0, false); });
   socket.on('call-end', () => { endCall(false, false); });
 
   // Draggable & Resizable logic
-  // Draggable & Resizable logic with Touch Support
+  // Improved Draggable & Resizable logic
   function setupResponsiveTools(el, dragHandle, resizeHandle) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
-    const dragStart = (e) => {
-      if (window.innerWidth <= 650) return; // Disable drag on mobile fixed view
-      const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-      const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-      pos3 = clientX; pos4 = clientY;
-      
-      const onMove = (e) => {
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        pos1 = pos3 - clientX; pos2 = pos4 - clientY;
-        pos3 = clientX; pos4 = clientY;
-        
-        let newTop = el.offsetTop - pos2;
-        let newLeft = el.offsetLeft - pos1;
-        
-        // Boundaries
-        if (newTop < 0) newTop = 0;
-        if (newLeft < 0) newLeft = 0;
-        if (newTop + el.offsetHeight > window.innerHeight) newTop = window.innerHeight - el.offsetHeight;
-        if (newLeft + el.offsetWidth > window.innerWidth) newLeft = window.innerWidth - el.offsetWidth;
+    let isDragging = false;
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight, startTop, startLeft;
 
-        el.style.top = newTop + "px";
-        el.style.left = newLeft + "px";
+    const onPointerDown = (e) => {
+      if (e.target === dragHandle) {
+        if (window.innerWidth <= 650) return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startTop = el.offsetTop;
+        startLeft = el.offsetLeft;
         el.style.right = 'auto'; el.style.bottom = 'auto';
-      };
-      
-      const onEnd = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onEnd);
-      };
-      
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onEnd);
-      document.addEventListener('touchmove', onMove, { passive: false });
-      document.addEventListener('touchend', onEnd);
+        el.setPointerCapture(e.pointerId);
+      } else if (e.target === resizeHandle) {
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = parseInt(document.defaultView.getComputedStyle(el).width, 10);
+        startHeight = parseInt(document.defaultView.getComputedStyle(el).height, 10);
+        el.setPointerCapture(e.pointerId);
+      }
     };
 
-    dragHandle.addEventListener('mousedown', dragStart);
-    dragHandle.addEventListener('touchstart', dragStart, { passive: false });
+    const onPointerMove = (e) => {
+      if (isDragging) {
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+        let newTop = startTop + dy;
+        let newLeft = startLeft + dx;
 
-    const resizeStart = (e) => {
-      const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-      const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-      let startX = clientX, startY = clientY;
-      let startWidth = parseInt(document.defaultView.getComputedStyle(el).width, 10);
-      let startHeight = parseInt(document.defaultView.getComputedStyle(el).height, 10);
-      
-      const onMove = (e) => {
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        el.style.width = Math.max(300, (startWidth + clientX - startX)) + 'px';
-        el.style.height = Math.max(380, (startHeight + clientY - startY)) + 'px';
-      };
-      
-      const onEnd = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onEnd);
-      };
-      
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onEnd);
-      document.addEventListener('touchmove', onMove, { passive: false });
-      document.addEventListener('touchend', onEnd);
+        // Boundaries
+        newTop = Math.max(0, Math.min(newTop, window.innerHeight - el.offsetHeight));
+        newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - el.offsetWidth));
+
+        el.style.top = newTop + 'px';
+        el.style.left = newLeft + 'px';
+      } else if (isResizing) {
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+        el.style.width = Math.max(300, startWidth + dx) + 'px';
+        el.style.height = Math.max(380, startHeight + dy) + 'px';
+      }
     };
 
-    resizeHandle.addEventListener('mousedown', resizeStart);
-    resizeHandle.addEventListener('touchstart', resizeStart, { passive: false });
+    const onPointerUp = (e) => {
+      isDragging = false;
+      isResizing = false;
+      if (el.hasPointerCapture(e.pointerId)) {
+        el.releasePointerCapture(e.pointerId);
+      }
+    };
+
+    el.addEventListener('pointerdown', onPointerDown);
+    el.addEventListener('pointermove', onPointerMove);
+    el.addEventListener('pointerup', onPointerUp);
+    el.addEventListener('pointercancel', onPointerUp);
   }
   setupResponsiveTools(document.getElementById('call-panel'), document.getElementById('call-drag-handle'), document.getElementById('resize-handle'));
 </script>
