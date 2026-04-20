@@ -24,12 +24,12 @@
     #status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
     #status-dot.online{background:var(--green);box-shadow:0 0 5px var(--green);}
     .header-right{display:flex;gap:5px;flex-shrink:0;}
-    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:6px 9px;font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;}
-    .hbtn:hover{border-color:var(--accent);color:var(--text);}
-    .hbtn.call-btn{color:var(--green);border-color:rgba(0,229,160,.25);}
-    .hbtn.call-btn:hover{background:rgba(0,229,160,.1);}
-    .hbtn.video-btn{color:#60a5fa;border-color:rgba(96,165,250,.25);}
-    .hbtn.video-btn:hover{background:rgba(96,165,250,.1);}
+    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--muted);padding:10px 16px;font-size:.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap;font-weight:600;}
+    .hbtn:hover{border-color:var(--accent);color:var(--text);transform:translateY(-1px);}
+    .hbtn.call-btn{color:var(--green);border-color:rgba(0,229,160,.35);background:rgba(0,229,160,0.05);}
+    .hbtn.call-btn:hover{background:rgba(0,229,160,.15);box-shadow: 0 4px 15px rgba(0,229,160,0.2);}
+    .hbtn.video-btn{color:#60a5fa;border-color:rgba(96,165,250,.35);background:rgba(96,165,250,0.05);}
+    .hbtn.video-btn:hover{background:rgba(96,165,250,.15);box-shadow: 0 4px 15px rgba(96,165,250,0.2);}
 
     #premium-banner{background:linear-gradient(135deg,rgba(245,197,24,.10),rgba(230,168,23,.05));border-bottom:1px solid rgba(245,197,24,.2);padding:6px 14px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--gold);flex-shrink:0;}
     #premium-banner span{color:var(--muted);font-size:.72rem;}
@@ -43,28 +43,48 @@
 
     #call-panel {
       display: none;
-      width: 0;
-      height: 100%;
+      position: fixed;
+      top: 100px;
+      right: 40px;
+      width: 380px;
+      height: 520px;
       background: #000;
       flex-direction: column;
-      border-left: 1px solid var(--border);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+      transition: opacity 0.3s ease;
       overflow: hidden;
+      z-index: 50;
+      resize: both;
+      min-width: 320px;
+      min-height: 240px;
+    }
+    #call-panel.active { display: flex; animation: fadeIn 0.3s ease; }
+    
+    #call-drag-handle {
+      height: 40px;
+      background: rgba(255,255,255,0.05);
+      cursor: move;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
       flex-shrink: 0;
     }
-    #call-panel.active { display: flex; width: 400px; }
-    
-    #videos{flex:1;position:relative;background:#000;overflow:hidden;}
+    #call-drag-handle::before { content: ""; width: 40px; height: 4px; background: var(--border); border-radius: 4px; }
+
+    #videos{flex:1;position:relative;background:#000;overflow:hidden;pointer-events: none;}
     #remote-video{width:100%;height:100%;object-fit:cover;background:#000;}
-    #local-video{position:absolute;bottom:12px;right:12px;width:100px;height:140px;object-fit:cover;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:#111;z-index:2;}
-    #call-status{position:absolute;top:16px;left:0;right:0;text-align:center;color:#fff;font-size:.75rem;font-weight:600;z-index:2;background:rgba(0,0,0,0.4);padding:4px 0;}
+    #local-video{position:absolute;bottom:16px;right:16px;width:110px;height:150px;object-fit:cover;border-radius:16px;border:2px solid rgba(255,255,255,0.15);background:#111;z-index:2;pointer-events: auto;}
+    #call-status{position:absolute;top:12px;left:0;right:0;text-align:center;color:#fff;font-size:.8rem;font-weight:700;z-index:2;text-shadow: 0 2px 10px rgba(0,0,0,0.5);}
     
-    #call-controls{display:flex;justify-content:center;gap:12px;padding:20px;background:#0d0d0f;border-top:1px solid rgba(255,255,255,0.05);}
-    .ctrl-btn{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);}
-    .ctrl-btn:hover{transform:scale(1.1);background:var(--border);}
-    .ctrl-btn.mute.active{background:rgba(255,61,107,0.2);color:var(--accent);}
-    .ctrl-btn.cam.active{background:rgba(123,92,250,0.2);color:var(--accent2);}
-    .ctrl-btn.end{background:#ff3b30;color:#fff;}
+    #call-controls{display:flex;justify-content:center;gap:16px;padding:24px;background:#0d0d0f;border-top:1px solid rgba(255,255,255,0.05);flex-shrink: 0;}
+    .ctrl-btn{width:56px;height:56px;border-radius:20px;border:none;cursor:pointer;font-size:1.4rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
+    .ctrl-btn:hover{transform:scale(1.1);background:var(--border);box-shadow: 0 12px 24px rgba(0,0,0,0.4);}
+    .ctrl-btn.mute.active{background:rgba(255,61,107,0.25);color:var(--accent);}
+    .ctrl-btn.cam.active{background:rgba(123,92,250,0.25);color:var(--accent2);}
+    .ctrl-btn.end{background:#ff3b30;color:#fff;box-shadow: 0 8px 30px rgba(255,59,48,0.3);}
     .ctrl-btn.upgrade{background:var(--green);color:#000;display:none;}
     .ctrl-btn.upgrade.show{display:flex;}
 
@@ -267,6 +287,7 @@
   </div>
 
   <div id="call-panel">
+    <div id="call-drag-handle"></div>
     <div id="videos">
       <video id="remote-video" autoplay playsinline></video>
       <video id="local-video" autoplay playsinline muted></video>
@@ -504,6 +525,7 @@
       await pc.setLocalDescription(offer);
       socket.emit('call-offer', { offer, withVideo });
       updateUpgradeBtn();
+      isCallActive = true;
     } catch(e) { alert('Camera/mic access denied: ' + e.message); }
   }
 
@@ -530,14 +552,20 @@
     } catch(e) { alert('Camera/mic access denied: ' + e.message); }
   }
 
-  function endCall() {
+  let isCallActive = false;
+
+  function endCall(sendSignal = true) {
+    if (!isCallActive) return;
+    isCallActive = false;
+    
     if (pc) { pc.close(); pc = null; }
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
     document.getElementById('remote-video').srcObject = null;
     document.getElementById('local-video').srcObject = null;
     document.getElementById('call-panel').classList.remove('active');
     iceCandidatesQueue = [];
-    socket.emit('call-end');
+    if (sendSignal) socket.emit('call-end');
+    addMessage('Call ended.', 'system', false, false, 0, false);
   }
 
   function toggleMute() {
@@ -641,6 +669,7 @@
       socket.emit('call-answer', { answer });
       
       updateUpgradeBtn();
+      isCallActive = true;
     } catch(e) { alert('Access denied: ' + e.message); }
     pendingOffer = null;
   }
@@ -793,8 +822,35 @@
     }
   }
 
-  socket.on('call-reject', () => { endCall(); addMessage('Call was declined.', 'system', false, false, 0, false); });
-  socket.on('call-end', () => { endCall(); addMessage('Call ended.', 'system', false, false, 0, false); });
+  socket.on('call-reject', () => { endCall(false); addMessage('Call was declined.', 'system', false, false, 0, false); });
+  socket.on('call-end', () => { endCall(false); });
+
+  // Draggable logic
+  function makeDraggable(el, handle) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    handle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+      e = e || window.event; e.preventDefault();
+      pos3 = e.clientX; pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+      e = e || window.event; e.preventDefault();
+      pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+      pos3 = e.clientX; pos4 = e.clientY;
+      el.style.top = (el.offsetTop - pos2) + "px";
+      el.style.left = (el.offsetLeft - pos1) + "px";
+      el.style.right = 'auto'; // Disable right-lock
+    }
+
+    function closeDragElement() {
+      document.onmouseup = null; document.onmousemove = null;
+    }
+  }
+  makeDraggable(document.getElementById('call-panel'), document.getElementById('call-drag-handle'));
 </script>
 </body>
 </html>
