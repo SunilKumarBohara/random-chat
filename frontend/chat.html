@@ -244,6 +244,7 @@
   let isRecording = false, mediaRecorder = null, audioChunks = [];
   let typingTimeout = null, selectedPayment = '';
   let pc = null, localStream = null, isMuted = false, isCamOff = false, isVideoCall = false;
+  let iceCandidatesQueue = [];
 
   const socket = io();
   const sessionKey = 'chatMsgs_' + nickname;
@@ -391,6 +392,7 @@
       pc.ontrack = e => document.getElementById('remote-video').srcObject = e.streams[0];
       pc.onicecandidate = e => { if (e.candidate) socket.emit('ice-candidate', { candidate: e.candidate }); };
       await pc.setRemoteDescription(offer);
+      processQueuedCandidates();
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit('call-answer', { answer });
@@ -403,6 +405,7 @@
     document.getElementById('remote-video').srcObject = null;
     document.getElementById('local-video').srcObject = null;
     document.getElementById('call-overlay').classList.remove('show');
+    iceCandidatesQueue = [];
     socket.emit('call-end');
   }
 
@@ -470,6 +473,17 @@
   }
   function activatePremium() {
     isPremium = true;
+    setup.isPremium = true;
+    sessionStorage.setItem('chatSetup', JSON.stringify(setup));
+    
+    // Also update rcUser for other pages
+    const userData = JSON.parse(sessionStorage.getItem('rcUser') || localStorage.getItem('rcUser') || 'null');
+    if (userData) {
+      userData.isPremium = true;
+      sessionStorage.setItem('rcUser', JSON.stringify(userData));
+      localStorage.setItem('rcUser', JSON.stringify(userData));
+    }
+
     document.getElementById('premium-modal').classList.remove('open');
     document.getElementById('gender-filter-bar').classList.remove('hidden');
     document.getElementById('premium-banner').classList.add('hidden');
@@ -508,8 +522,30 @@
   });
 
   socket.on('call-offer', async ({ offer, withVideo }) => await handleOffer(offer, withVideo));
-  socket.on('call-answer', async ({ answer }) => { if (pc) { await pc.setRemoteDescription(answer); document.getElementById('call-status').textContent = 'Connected'; } });
-  socket.on('ice-candidate', async ({ candidate }) => { if (pc) await pc.addIceCandidate(candidate); });
+  socket.on('call-answer', async ({ answer }) => { 
+    if (pc) { 
+      await pc.setRemoteDescription(answer); 
+      document.getElementById('call-status').textContent = 'Connected'; 
+      processQueuedCandidates();
+    } 
+  });
+
+  socket.on('ice-candidate', async ({ candidate }) => { 
+    if (pc && pc.remoteDescription && pc.remoteDescription.type) { 
+      try { await pc.addIceCandidate(candidate); } catch(e) {}
+    } else {
+      iceCandidatesQueue.push(candidate);
+    }
+  });
+
+  async function processQueuedCandidates() {
+    if (!pc) return;
+    while (iceCandidatesQueue.length > 0) {
+      const c = iceCandidatesQueue.shift();
+      try { await pc.addIceCandidate(c); } catch(e) {}
+    }
+  }
+
   socket.on('call-reject', () => { endCall(); addMessage('Call was declined.', 'system', false, false, 0, false); });
   socket.on('call-end', () => { endCall(); addMessage('Call ended.', 'system', false, false, 0, false); });
 </script>

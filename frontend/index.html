@@ -3,135 +3,162 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>RandomChat — Setup</title>
+  <title>RandomChat — Connect with Strangers</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--accent:#ff3d6b;--accent2:#7b5cfa;--green:#00e5a0;--gold:#f5c518;--text:#f0f0f5;--muted:#888899;--border:#2a2a35;}
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-    body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(123,92,250,.12) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(255,61,107,.10) 0%,transparent 60%);}
-    .box{position:relative;z-index:1;width:100%;max-width:440px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:36px 32px;box-shadow:0 24px 80px rgba(0,0,0,.5);animation:fadeUp .4s ease both;}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-    .user-bar{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:20px;}
-    .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;overflow:hidden;}
-    .user-avatar img{width:100%;height:100%;object-fit:cover;}
-    .user-info{flex:1;}
-    .user-name{font-weight:600;font-size:.9rem;}
-    .user-type{font-size:.75rem;color:var(--muted);}
-    .logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;transition:color .2s;}
-    .logout-btn:hover{color:var(--accent);}
-    .logo{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:4px;}
-    .tagline{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:24px;}
-    .field{margin-bottom:16px;}
-    .field-label{font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;}
-    input[type=text],input[type=number]{width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s;}
-    input:focus{border-color:var(--accent2);}
-    .pill-group{display:flex;gap:8px;flex-wrap:wrap;}
-    .pill{flex:1;min-width:80px;padding:10px 8px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;text-align:center;transition:all .2s;user-select:none;position:relative;}
-    .pill.active{border-color:var(--accent2);background:rgba(123,92,250,.15);color:var(--text);}
-    .pill.pref.active{border-color:var(--accent);background:rgba(255,61,107,.12);}
-    .pill .lock{font-size:.65rem;position:absolute;top:3px;right:5px;color:var(--gold);}
-    .start-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s,transform .15s;}
-    .start-btn:hover{opacity:.9;transform:translateY(-1px);}
-    @media(max-width:480px){.box{padding:24px 16px;}}
+    :root {
+      --bg: #0d0d0f;
+      --surface: rgba(22, 22, 26, 0.8);
+      --accent: #ff3d6b;
+      --accent2: #7b5cfa;
+      --text: #f0f0f5;
+      --muted: #888899;
+      --border: rgba(42, 42, 53, 0.5);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero-bg {
+      position: fixed;
+      inset: 0;
+      background: url('bg.png') no-repeat center center/cover;
+      opacity: 0.6;
+      filter: blur(20px);
+      z-index: -1;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 600px;
+      padding: 40px 20px;
+      animation: fadeIn 1s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      letter-spacing: -2px;
+    }
+    .tagline {
+      font-size: 1.25rem;
+      color: var(--muted);
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+    .btn-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .main-btn {
+      padding: 16px 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 100px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 30px rgba(255, 61, 107, 0.3);
+    }
+    .main-btn:hover {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 15px 40px rgba(255, 61, 107, 0.4);
+    }
+    .sec-btn {
+      padding: 16px 40px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .sec-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--muted);
+    }
+    .features {
+      margin-top: 60px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .feat {
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      padding: 24px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      transition: transform 0.3s;
+    }
+    .feat:hover { transform: translateY(-5px); }
+    .feat-icon { font-size: 1.5rem; margin-bottom: 12px; }
+    .feat-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
+    .feat-desc { font-size: 0.75rem; color: var(--muted); }
+
+    @media (max-width: 480px) {
+      .logo { font-size: 3rem; }
+      .features { grid-template-columns: 1fr; }
+      .main-btn, .sec-btn { width: 100%; }
+    }
   </style>
 </head>
 <body>
-<div class="box">
-  <div id="user-bar" class="user-bar" style="display:none;">
-    <div class="user-avatar" id="avatar">?</div>
-    <div class="user-info">
-      <div class="user-name" id="user-display-name">User</div>
-      <div class="user-type" id="user-type">Logged in</div>
+  <div class="hero-bg"></div>
+  <div class="container">
+    <div class="logo">RandomChat</div>
+    <p class="tagline">The world's most beautiful random chat experience. Connect with interesting people globally in seconds.</p>
+    
+    <div class="btn-group">
+      <a href="setup.html" class="main-btn">Start Chatting →</a>
+      <a href="auth.html" class="sec-btn">Login / Signup</a>
     </div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
-  </div>
 
-  <div class="logo">RandomChat</div>
-  <p class="tagline">Set up your chat preferences</p>
-
-  <div class="field">
-    <div class="field-label">Nickname</div>
-    <input type="text" id="nickname" placeholder="e.g. shadow_wolf" maxlength="20"/>
-  </div>
-
-  <div class="field">
-    <div class="field-label">Your Age</div>
-    <input type="number" id="age" placeholder="e.g. 22" min="13" max="99"/>
-  </div>
-
-  <div class="field">
-    <div class="field-label">Your Gender</div>
-    <div class="pill-group">
-      <div class="pill" data-gender="male" onclick="selectGender(this)">♂ Male</div>
-      <div class="pill" data-gender="female" onclick="selectGender(this)">♀ Female</div>
-      <div class="pill" data-gender="other" onclick="selectGender(this)">⚧ Other</div>
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon">🔒</div>
+        <div class="feat-title">Anonymous</div>
+        <div class="feat-desc">No personal data shared unless you want to.</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📹</div>
+        <div class="feat-title">HD Video</div>
+        <div class="feat-desc">Crystal clear voice and video calls.</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">⭐</div>
+        <div class="feat-title">Premium</div>
+        <div class="feat-desc">Filter by gender and age for better matches.</div>
+      </div>
     </div>
   </div>
-
-  <div class="field">
-    <div class="field-label">Chat with <span style="color:var(--gold);font-size:.7rem;">★ Filter = Premium</span></div>
-    <div class="pill-group">
-      <div class="pill pref active" data-pref="anyone" onclick="selectPref(this,false)">Anyone</div>
-      <div class="pill pref" data-pref="male" onclick="selectPref(this,true)">♂ Males<span class="lock">★</span></div>
-      <div class="pill pref" data-pref="female" onclick="selectPref(this,true)">♀ Females<span class="lock">★</span></div>
-    </div>
-  </div>
-
-  <button class="start-btn" onclick="startChat()">Start Chatting →</button>
-</div>
-
-<script>
-  let myGender = '', myPref = 'anyone', isPremium = false;
-
-  // Load user session
-  const userData = JSON.parse(sessionStorage.getItem('rcUser') || localStorage.getItem('rcUser') || 'null');
-  if (userData && userData.loggedIn) {
-    document.getElementById('user-bar').style.display = 'flex';
-    document.getElementById('user-display-name').textContent = userData.name;
-    document.getElementById('user-type').textContent = userData.phone ? `📱 ${userData.phone}` : `📧 ${userData.email}`;
-    document.getElementById('nickname').value = userData.name;
-    const av = document.getElementById('avatar');
-    if (userData.photo) {
-      av.innerHTML = `<img src="${userData.photo}" alt="avatar"/>`;
-    } else {
-      av.textContent = userData.name.charAt(0).toUpperCase();
-    }
-  }
-
-  function logout() {
-    sessionStorage.removeItem('rcUser');
-    localStorage.removeItem('rcUser');
-    window.location.href = 'auth.html';
-  }
-
-  function selectGender(el) {
-    document.querySelectorAll('[data-gender]').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    myGender = el.dataset.gender;
-  }
-
-  function selectPref(el, requiresPremium) {
-    if (requiresPremium && !isPremium) {
-      alert('Gender filter is a Premium feature! Upgrade to unlock.');
-      return;
-    }
-    document.querySelectorAll('.pref').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    myPref = el.dataset.pref;
-  }
-
-  function startChat() {
-    const nickname = document.getElementById('nickname').value.trim();
-    const age = parseInt(document.getElementById('age').value) || null;
-    if (!nickname) return alert('Please enter a nickname!');
-    if (!myGender) return alert('Please select your gender!');
-
-    // Save to session
-    const chatSetup = { nickname, age, gender: myGender, pref: myPref, isPremium };
-    sessionStorage.setItem('chatSetup', JSON.stringify(chatSetup));
-    window.location.href = 'chat.html';
-  }
-</script>
 </body>
 </html>

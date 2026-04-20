@@ -17,13 +17,23 @@ const activePairs = {};
 
 function findMatch(socket, data) {
   const { nickname, gender, pref, age } = data;
+  
+  // Remove user if already in waiting list to avoid duplicates
+  const existingIdx = waitingUsers.findIndex(u => u.id === socket.id);
+  if (existingIdx !== -1) waitingUsers.splice(existingIdx, 1);
+
   let matchIndex = waitingUsers.findIndex(u => {
     if (u.id === socket.id) return false;
     const iWant = pref === 'anyone' || pref === u.gender;
     const theyWant = u.pref === 'anyone' || u.pref === gender;
     return iWant && theyWant;
   });
-  if (matchIndex === -1) matchIndex = waitingUsers.findIndex(u => u.id !== socket.id);
+
+  // Fallback to anyone if no preference match (optional, but keeps the app active)
+  if (matchIndex === -1 && pref === 'anyone') {
+    matchIndex = waitingUsers.findIndex(u => u.id !== socket.id);
+  }
+
   if (matchIndex !== -1) {
     const partner = waitingUsers.splice(matchIndex, 1)[0];
     activePairs[socket.id] = partner.id;
@@ -31,9 +41,7 @@ function findMatch(socket, data) {
     io.to(socket.id).emit('matched', { partnerNickname: partner.nickname, partnerGender: partner.gender, partnerAge: partner.age });
     io.to(partner.id).emit('matched', { partnerNickname: nickname, partnerGender: gender, partnerAge: age });
   } else {
-    if (!waitingUsers.find(u => u.id === socket.id)) {
-      waitingUsers.push({ id: socket.id, nickname, gender, pref, age });
-    }
+    waitingUsers.push({ id: socket.id, nickname, gender, pref, age });
     socket.emit('waiting');
   }
 }

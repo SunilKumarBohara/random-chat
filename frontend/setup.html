@@ -89,9 +89,10 @@
 
   const userData = JSON.parse(sessionStorage.getItem('rcUser') || localStorage.getItem('rcUser') || 'null');
   if (userData && userData.loggedIn) {
+    isPremium = userData.isPremium || false;
     document.getElementById('user-bar').style.display = 'flex';
     document.getElementById('user-display-name').textContent = userData.name;
-    document.getElementById('user-type').textContent = userData.phone ? '📱 ' + userData.phone : '📧 ' + userData.email;
+    document.getElementById('user-type').textContent = userData.isPremium ? '⭐ Premium User' : 'Standard User';
     document.getElementById('nickname').value = userData.name;
     const av = document.getElementById('avatar');
     if (userData.photo) {
