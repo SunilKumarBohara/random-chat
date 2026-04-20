@@ -24,7 +24,8 @@
     #status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
     #status-dot.online{background:var(--green);box-shadow:0 0 5px var(--green);}
     .header-right{display:flex;gap:5px;flex-shrink:0;}
-    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:14px;color:var(--text);padding:14px 22px;font-size:1rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.2s;white-space:nowrap;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:14px;color:var(--text);padding:min(2.5vw, 14px) min(4vw, 22px);font-size:clamp(0.8rem, 2.5vw, 1.1rem);cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.2s;white-space:nowrap;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;flex-shrink:1;}
+    .hbtn:active{transform:scale(0.95);}
     .hbtn:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow: 0 8px 25px rgba(123,92,250,0.3);}
     .hbtn.call-btn{color:var(--green);border-color:rgba(0,229,160,.4);background:rgba(0,229,160,0.08);}
     .hbtn.call-btn:hover{background:var(--green);color:#1a1200;box-shadow: 0 8px 30px rgba(0,229,160,0.4);}
@@ -56,9 +57,9 @@
       transition: opacity 0.3s ease;
       overflow: hidden;
       z-index: 50;
-      resize: both;
-      min-width: 340px;
-      min-height: 400px;
+      resize: none;
+      min-width: 300px;
+      min-height: 380px;
     }
     #call-panel.active { display: flex; animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     
@@ -89,8 +90,19 @@
     .ctrl-btn.upgrade{background:var(--green);color:#000;display:none;box-shadow: 0 12px 30px rgba(0,229,160,0.3);}
     .ctrl-btn.upgrade.show{display:flex;}
     
-    #resize-hint { position: absolute; bottom: 4px; right: 4px; width: 12px; height: 12px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); pointer-events: none; opacity: 0.5; }
-    #call-panel:hover #resize-hint { opacity: 1; }
+    #resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, transparent 50%, var(--accent2) 50%);
+      cursor: nwse-resize;
+      z-index: 10;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    #resize-handle:hover { opacity: 1; }
 
     #call-notify {
       display: none;
@@ -304,7 +316,7 @@
       <button class="ctrl-btn upgrade" id="upgrade-btn" onclick="requestUpgrade()" title="Switch to Video">🎬</button>
       <button class="ctrl-btn end" onclick="endCall()" title="End Call">📵</button>
     </div>
-    <div id="resize-hint"></div>
+    <div id="resize-handle"></div>
   </div>
 </div>
 
@@ -585,7 +597,7 @@
 
   let isCallActive = false;
 
-  function endCall(sendSignal = true) {
+  function endCall(sendSignal = true, quiet = false) {
     if (!isCallActive) return;
     isCallActive = false;
     
@@ -596,7 +608,7 @@
     document.getElementById('call-panel').classList.remove('active');
     iceCandidatesQueue = [];
     if (sendSignal) socket.emit('call-end');
-    addMessage('Call ended.', 'system', false, false, 0, false);
+    if (!quiet) addMessage('Call ended.', 'system', false, false, 0, false);
   }
 
   function toggleMute() {
@@ -752,7 +764,7 @@
 
   socket.on('partner-left', () => {
     isConnected = false;
-    endCall();
+    endCall(false, true); // End call quietly bcz partner-left will show its own message
     document.getElementById('status-dot').className = '';
     document.getElementById('status-text').textContent = 'Disconnected';
     document.getElementById('disc-overlay').classList.add('show');
@@ -809,32 +821,38 @@
   socket.on('call-reject', () => { endCall(false); addMessage('Call was declined.', 'system', false, false, 0, false); });
   socket.on('call-end', () => { endCall(false); });
 
-  // Draggable logic
-  function makeDraggable(el, handle) {
+  // Draggable & Resizable logic
+  function setupResponsiveTools(el, dragHandle, resizeHandle) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    handle.onmousedown = dragMouseDown;
-
-    function dragMouseDown(e) {
+    
+    dragHandle.onmousedown = (e) => {
       e = e || window.event; e.preventDefault();
       pos3 = e.clientX; pos4 = e.clientY;
-      document.onmouseup = closeDragElement;
-      document.onmousemove = elementDrag;
-    }
+      document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
+      document.onmousemove = (e) => {
+        e = e || window.event; e.preventDefault();
+        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+        pos3 = e.clientX; pos4 = e.clientY;
+        el.style.top = (el.offsetTop - pos2) + "px";
+        el.style.left = (el.offsetLeft - pos1) + "px";
+        el.style.right = 'auto'; el.style.bottom = 'auto';
+      };
+    };
 
-    function elementDrag(e) {
+    resizeHandle.onmousedown = (e) => {
       e = e || window.event; e.preventDefault();
-      pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-      pos3 = e.clientX; pos4 = e.clientY;
-      el.style.top = (el.offsetTop - pos2) + "px";
-      el.style.left = (el.offsetLeft - pos1) + "px";
-      el.style.right = 'auto'; // Disable right-lock
-    }
-
-    function closeDragElement() {
-      document.onmouseup = null; document.onmousemove = null;
-    }
+      let startX = e.clientX, startY = e.clientY;
+      let startWidth = parseInt(document.defaultView.getComputedStyle(el).width, 10);
+      let startHeight = parseInt(document.defaultView.getComputedStyle(el).height, 10);
+      
+      document.onmousemove = (e) => {
+        el.style.width = (startWidth + e.clientX - startX) + 'px';
+        el.style.height = (startHeight + e.clientY - startY) + 'px';
+      };
+      document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; };
+    };
   }
-  makeDraggable(document.getElementById('call-panel'), document.getElementById('call-drag-handle'));
+  setupResponsiveTools(document.getElementById('call-panel'), document.getElementById('call-drag-handle'), document.getElementById('resize-handle'));
 </script>
 </body>
 </html>
