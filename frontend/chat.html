@@ -24,12 +24,12 @@
     #status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
     #status-dot.online{background:var(--green);box-shadow:0 0 5px var(--green);}
     .header-right{display:flex;gap:5px;flex-shrink:0;}
-    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--muted);padding:10px 16px;font-size:.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap;font-weight:600;}
-    .hbtn:hover{border-color:var(--accent);color:var(--text);transform:translateY(-1px);}
-    .hbtn.call-btn{color:var(--green);border-color:rgba(0,229,160,.35);background:rgba(0,229,160,0.05);}
-    .hbtn.call-btn:hover{background:rgba(0,229,160,.15);box-shadow: 0 4px 15px rgba(0,229,160,0.2);}
-    .hbtn.video-btn{color:#60a5fa;border-color:rgba(96,165,250,.35);background:rgba(96,165,250,0.05);}
-    .hbtn.video-btn:hover{background:rgba(96,165,250,.15);box-shadow: 0 4px 15px rgba(96,165,250,0.2);}
+    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:14px;color:var(--text);padding:14px 22px;font-size:1rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.2s;white-space:nowrap;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .hbtn:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow: 0 8px 25px rgba(123,92,250,0.3);}
+    .hbtn.call-btn{color:var(--green);border-color:rgba(0,229,160,.4);background:rgba(0,229,160,0.08);}
+    .hbtn.call-btn:hover{background:var(--green);color:#1a1200;box-shadow: 0 8px 30px rgba(0,229,160,0.4);}
+    .hbtn.video-btn{color:#60a5fa;border-color:rgba(96,165,250,.4);background:rgba(96,165,250,0.08);}
+    .hbtn.video-btn:hover{background:#60a5fa;color:#fff;box-shadow: 0 8px 30px rgba(96,165,250,0.4);}
 
     #premium-banner{background:linear-gradient(135deg,rgba(245,197,24,.10),rgba(230,168,23,.05));border-bottom:1px solid rgba(245,197,24,.2);padding:6px 14px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--gold);flex-shrink:0;}
     #premium-banner span{color:var(--muted);font-size:.72rem;}
@@ -44,49 +44,53 @@
     #call-panel {
       display: none;
       position: fixed;
-      top: 100px;
+      top: 80px;
       right: 40px;
-      width: 380px;
-      height: 520px;
+      width: 420px;
+      height: 580px;
       background: #000;
       flex-direction: column;
       border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+      border-radius: 28px;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.8);
       transition: opacity 0.3s ease;
       overflow: hidden;
       z-index: 50;
       resize: both;
-      min-width: 320px;
-      min-height: 240px;
+      min-width: 340px;
+      min-height: 400px;
     }
-    #call-panel.active { display: flex; animation: fadeIn 0.3s ease; }
+    #call-panel.active { display: flex; animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     
     #call-drag-handle {
-      height: 40px;
-      background: rgba(255,255,255,0.05);
+      height: 50px;
+      background: rgba(255,255,255,0.03);
       cursor: move;
       display: flex;
       align-items: center;
       justify-content: center;
       border-bottom: 1px solid rgba(255,255,255,0.05);
       flex-shrink: 0;
+      position: relative;
     }
-    #call-drag-handle::before { content: ""; width: 40px; height: 4px; background: var(--border); border-radius: 4px; }
+    #call-drag-handle::after { content: "DRAG TO MOVE"; font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); font-weight: 800; }
 
     #videos{flex:1;position:relative;background:#000;overflow:hidden;pointer-events: none;}
     #remote-video{width:100%;height:100%;object-fit:cover;background:#000;}
-    #local-video{position:absolute;bottom:16px;right:16px;width:110px;height:150px;object-fit:cover;border-radius:16px;border:2px solid rgba(255,255,255,0.15);background:#111;z-index:2;pointer-events: auto;}
-    #call-status{position:absolute;top:12px;left:0;right:0;text-align:center;color:#fff;font-size:.8rem;font-weight:700;z-index:2;text-shadow: 0 2px 10px rgba(0,0,0,0.5);}
+    #local-video{position:absolute;bottom:20px;right:20px;width:120px;height:165px;object-fit:cover;border-radius:18px;border:2px solid rgba(255,255,255,0.2);background:#111;z-index:2;pointer-events: auto;box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+    #call-status{position:absolute;top:16px;left:0;right:0;text-align:center;color:#fff;font-size:.85rem;font-weight:800;z-index:2;text-shadow: 0 2px 10px rgba(0,0,0,0.8);}
     
-    #call-controls{display:flex;justify-content:center;gap:16px;padding:24px;background:#0d0d0f;border-top:1px solid rgba(255,255,255,0.05);flex-shrink: 0;}
-    .ctrl-btn{width:56px;height:56px;border-radius:20px;border:none;cursor:pointer;font-size:1.4rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
-    .ctrl-btn:hover{transform:scale(1.1);background:var(--border);box-shadow: 0 12px 24px rgba(0,0,0,0.4);}
-    .ctrl-btn.mute.active{background:rgba(255,61,107,0.25);color:var(--accent);}
-    .ctrl-btn.cam.active{background:rgba(123,92,250,0.25);color:var(--accent2);}
-    .ctrl-btn.end{background:#ff3b30;color:#fff;box-shadow: 0 8px 30px rgba(255,59,48,0.3);}
-    .ctrl-btn.upgrade{background:var(--green);color:#000;display:none;}
+    #call-controls{display:flex;justify-content:center;gap:20px;padding:28px;background:#0d0d0f;border-top:1px solid rgba(255,255,255,0.05);flex-shrink: 0;}
+    .ctrl-btn{width:64px;height:64px;border-radius:24px;border:none;cursor:pointer;font-size:1.6rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);box-shadow: 0 12px 30px rgba(0,0,0,0.4);}
+    .ctrl-btn:hover{transform:scale(1.1) translateY(-3px);background:var(--border);box-shadow: 0 18px 40px rgba(0,0,0,0.5);}
+    .ctrl-btn.mute.active{background:rgba(255,61,107,0.3);color:var(--accent);box-shadow: 0 10px 25px rgba(255,61,107,0.3);}
+    .ctrl-btn.cam.active{background:rgba(123,92,250,0.3);color:var(--accent2);box-shadow: 0 10px 25px rgba(123,92,250,0.3);}
+    .ctrl-btn.end{background:#ff3b30;color:#fff;box-shadow: 0 12px 35px rgba(255,59,48,0.4);}
+    .ctrl-btn.upgrade{background:var(--green);color:#000;display:none;box-shadow: 0 12px 30px rgba(0,229,160,0.3);}
     .ctrl-btn.upgrade.show{display:flex;}
+    
+    #resize-hint { position: absolute; bottom: 4px; right: 4px; width: 12px; height: 12px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); pointer-events: none; opacity: 0.5; }
+    #call-panel:hover #resize-hint { opacity: 1; }
 
     #call-notify {
       display: none;
@@ -299,6 +303,7 @@
       <button class="ctrl-btn upgrade" id="upgrade-btn" onclick="requestUpgrade()" title="Switch to Video">🎬</button>
       <button class="ctrl-btn end" onclick="endCall()" title="End Call">📵</button>
     </div>
+    <div id="resize-hint"></div>
   </div>
 </div>
 
