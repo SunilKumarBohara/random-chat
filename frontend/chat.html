@@ -9,7 +9,10 @@
     :root{--bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--accent:#ff3d6b;--accent2:#7b5cfa;--green:#00e5a0;--gold:#f5c518;--text:#f0f0f5;--muted:#888899;--border:#2a2a35;}
     *{box-sizing:border-box;margin:0;padding:0;}
     html,body{height:100%;overflow:hidden;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;width:100vw;overflow:hidden;}
+    
+    #app-container { display: flex; width: 100%; height: 100%; overflow: hidden; position: relative; }
+    #main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); transition: all 0.3s ease; position: relative; }
 
     #header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:8px;}
     .header-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1;}
@@ -38,68 +41,81 @@
     .fpill{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:.73rem;cursor:pointer;transition:all .2s;}
     .fpill.active{border-color:var(--accent);background:rgba(255,61,107,.12);color:var(--text);}
 
-    #call-overlay {
+    #call-panel {
       display: none;
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 320px;
-      height: 480px;
+      width: 0;
+      height: 100%;
       background: #000;
-      z-index: 50;
       flex-direction: column;
-      border-radius: 20px;
+      border-left: 1px solid var(--border);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-      border: 1px solid var(--border);
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      flex-shrink: 0;
     }
-    #call-overlay.show { display: flex; animation: callIn 0.5s ease; }
-    @keyframes callIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    #call-panel.active { display: flex; width: 400px; }
     
-    #videos{flex:1;position:relative;background:#111;overflow:hidden;}
-    #remote-video{width:100%;height:100%;object-fit:cover;background:#111;}
-    #local-video{position:absolute;bottom:12px;right:12px;width:90px;height:120px;object-fit:cover;border-radius:12px;border:2px solid rgba(255,255,255,0.1);background:#222;z-index:2;cursor:move;}
-    #call-status{position:absolute;top:12px;left:0;right:0;text-align:center;color:rgba(255,255,255,.9);font-size:.75rem;font-weight:600;text-shadow:0 2px 4px rgba(0,0,0,0.5);z-index:2;}
+    #videos{flex:1;position:relative;background:#000;overflow:hidden;}
+    #remote-video{width:100%;height:100%;object-fit:cover;background:#000;}
+    #local-video{position:absolute;bottom:12px;right:12px;width:100px;height:140px;object-fit:cover;border-radius:12px;border:2px solid rgba(255,255,255,0.15);background:#111;z-index:2;}
+    #call-status{position:absolute;top:16px;left:0;right:0;text-align:center;color:#fff;font-size:.75rem;font-weight:600;z-index:2;background:rgba(0,0,0,0.4);padding:4px 0;}
     
-    #call-controls{display:flex;justify-content:center;gap:12px;padding:16px;background:rgba(13,13,15,0.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;}
-    .ctrl-btn{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);}
+    #call-controls{display:flex;justify-content:center;gap:12px;padding:20px;background:#0d0d0f;border-top:1px solid rgba(255,255,255,0.05);}
+    .ctrl-btn{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);}
     .ctrl-btn:hover{transform:scale(1.1);background:var(--border);}
-    .ctrl-btn.mute.active{background:rgba(255,255,255,0.15);color:var(--accent);}
-    .ctrl-btn.cam.active{background:rgba(255,255,255,0.15);color:var(--accent2);}
+    .ctrl-btn.mute.active{background:rgba(255,61,107,0.2);color:var(--accent);}
+    .ctrl-btn.cam.active{background:rgba(123,92,250,0.2);color:var(--accent2);}
     .ctrl-btn.end{background:#ff3b30;color:#fff;}
-    .ctrl-btn.upgrade{background:var(--green);color:#1a1200;display:none;}
+    .ctrl-btn.upgrade{background:var(--green);color:#000;display:none;}
     .ctrl-btn.upgrade.show{display:flex;}
 
-    /* Incoming Call Notification */
     #call-notify {
       display: none;
       position: fixed;
       top: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(22, 22, 26, 0.95);
-      backdrop-filter: blur(20px);
+      background: rgba(22, 22, 26, 0.98);
+      backdrop-filter: blur(24px);
       border: 1px solid var(--accent);
-      border-radius: 20px;
-      padding: 16px 20px;
-      z-index: 100;
+      border-radius: 24px;
+      padding: 16px 24px;
+      z-index: 1000;
       width: 90%;
-      max-width: 360px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      max-width: 400px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.6);
       align-items: center;
       gap: 16px;
-      animation: notifyIn 0.4s ease;
+      animation: notifyIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    @keyframes notifyIn { from { top: -100px; } to { top: 24px; } }
+    @keyframes notifyIn { from { transform: translate(-50%, -100px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
     #call-notify.show { display: flex; }
     .notify-info { flex: 1; min-width: 0; }
-    .notify-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent); }
+    .notify-name { font-weight: 800; font-size: 1rem; color: var(--accent); margin-bottom: 2px; }
     .notify-type { font-size: 0.75rem; color: var(--muted); }
-    .notify-btns { display: flex; gap: 8px; }
-    .nbtn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; color: #fff; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+    .notify-btns { display: flex; gap: 10px; }
+    .nbtn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; color: #fff; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+    .nbtn:hover { transform: scale(1.1); }
     .nbtn.accept { background: var(--green); }
     .nbtn.reject { background: var(--accent); }
+
+    @media(max-width:900px){
+      #call-panel.active { width: 320px; }
+    }
+
+    @media(max-width:650px){
+      #call-panel.active {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100% !important;
+        height: 50%;
+        z-index: 100;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        border-radius: 24px 24px 0 0;
+      }
+    }
 
     #chat-wrapper{flex:1;position:relative;display:flex;flex-direction:column;overflow:hidden;}
     #messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--bg);}
@@ -198,66 +214,70 @@
 </head>
 <body>
 
-<div id="header">
-  <div class="header-left">
-    <button class="home-btn" onclick="goHome()">🏠</button>
-    <div class="partner-info">
-      <div id="partner-name">Stranger</div>
-      <div id="partner-meta"><span id="status-dot"></span><span id="status-text">Connecting...</span></div>
+<div id="app-container">
+  <div id="main-content">
+    <div id="header">
+      <div class="header-left">
+        <button class="home-btn" onclick="goHome()">🏠</button>
+        <div class="partner-info">
+          <div id="partner-name">Stranger</div>
+          <div id="partner-meta"><span id="status-dot"></span><span id="status-text">Connecting...</span></div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="hbtn call-btn" onclick="startCall(false)">📞</button>
+        <button class="hbtn video-btn" onclick="startCall(true)">📹</button>
+        <button class="hbtn" onclick="nextStranger()">⏭ Next</button>
+        <button class="hbtn" onclick="goHome()">✕</button>
+      </div>
+    </div>
+
+    <div id="gender-filter-bar" class="hidden">
+      <span>Filter:</span>
+      <div class="fpill active" data-pref="anyone" onclick="setChatPref(this)">Anyone</div>
+      <div class="fpill" data-pref="male" onclick="setChatPref(this)">♂ Males</div>
+      <div class="fpill" data-pref="female" onclick="setChatPref(this)">♀ Females</div>
+    </div>
+
+    <div id="premium-banner">
+      <div>⭐ <strong>Premium</strong> <span>— Filter by gender</span></div>
+      <button onclick="openPremium()">Upgrade</button>
+    </div>
+
+    <div id="chat-wrapper">
+      <div id="messages"></div>
+      <div id="typing-bar"></div>
+      <div id="input-area">
+        <button class="ibtn" id="voice-btn" onclick="toggleRecording()" title="Voice message">🎙️</button>
+        <button class="ibtn" onclick="document.getElementById('photo-input').click()" title="Photo">📷</button>
+        <input type="file" id="photo-input" accept="image/*" onchange="sendPhoto(event)"/>
+        <input type="text" id="msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" oninput="handleTyping()"/>
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+      </div>
+      <div id="disc-overlay">
+        <div style="font-size:2.2rem;">👋</div>
+        <h3>Stranger has left</h3>
+        <p>What would you like to do?</p>
+        <div class="ov-btns">
+          <button class="ov-next" onclick="overlayNext()">⏭ Find New Stranger</button>
+          <button class="ov-home" onclick="goHome()">🏠 Go Home</button>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="header-right">
-    <button class="hbtn call-btn" onclick="startCall(false)">📞</button>
-    <button class="hbtn video-btn" onclick="startCall(true)">📹</button>
-    <button class="hbtn" onclick="nextStranger()">⏭ Next</button>
-    <button class="hbtn" onclick="goHome()">✕</button>
-  </div>
-</div>
 
-<div id="gender-filter-bar" class="hidden">
-  <span>Filter:</span>
-  <div class="fpill active" data-pref="anyone" onclick="setChatPref(this)">Anyone</div>
-  <div class="fpill" data-pref="male" onclick="setChatPref(this)">♂ Males</div>
-  <div class="fpill" data-pref="female" onclick="setChatPref(this)">♀ Females</div>
-</div>
-
-<div id="premium-banner">
-  <div>⭐ <strong>Premium</strong> <span>— Filter by gender</span></div>
-  <button onclick="openPremium()">Upgrade</button>
-</div>
-
-<div id="chat-wrapper">
-  <div id="messages"></div>
-  <div id="typing-bar"></div>
-  <div id="input-area">
-    <button class="ibtn" id="voice-btn" onclick="toggleRecording()" title="Voice message">🎙️</button>
-    <button class="ibtn" onclick="document.getElementById('photo-input').click()" title="Photo">📷</button>
-    <input type="file" id="photo-input" accept="image/*" onchange="sendPhoto(event)"/>
-    <input type="text" id="msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" oninput="handleTyping()"/>
-    <button id="send-btn" onclick="sendMessage()">Send</button>
-  </div>
-  <div id="disc-overlay">
-    <div style="font-size:2.2rem;">👋</div>
-    <h3>Stranger has left</h3>
-    <p>What would you like to do?</p>
-    <div class="ov-btns">
-      <button class="ov-next" onclick="overlayNext()">⏭ Find New Stranger</button>
-      <button class="ov-home" onclick="goHome()">🏠 Go Home</button>
+  <div id="call-panel">
+    <div id="videos">
+      <video id="remote-video" autoplay playsinline></video>
+      <video id="local-video" autoplay playsinline muted></video>
+      <div id="call-status">Calling...</div>
     </div>
-  </div>
-</div>
-
-<div id="call-overlay">
-  <div id="videos">
-    <video id="remote-video" autoplay playsinline></video>
-    <video id="local-video" autoplay playsinline muted></video>
-    <div id="call-status">Calling...</div>
-  </div>
-  <div id="call-controls">
-    <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()" title="Mute/Unmute">🎙️</button>
-    <button class="ctrl-btn cam" id="cam-btn" onclick="toggleCam()" title="Video On/Off">📹</button>
-    <button class="ctrl-btn upgrade" id="upgrade-btn" onclick="requestUpgrade()" title="Switch to Video">🎬</button>
-    <button class="ctrl-btn end" onclick="endCall()" title="End Call">📵</button>
+    <div id="call-controls">
+      <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()" title="Mute/Unmute">🎙️</button>
+      <button class="ctrl-btn cam" id="cam-btn" onclick="toggleCam()" title="Video On/Off">📹</button>
+      <button class="ctrl-btn upgrade" id="upgrade-btn" onclick="requestUpgrade()" title="Switch to Video">🎬</button>
+      <button class="ctrl-btn end" onclick="endCall()" title="End Call">📵</button>
+    </div>
   </div>
 </div>
 
@@ -474,7 +494,7 @@
       if (localStream) localStream.getTracks().forEach(t => t.stop());
       localStream = await navigator.mediaDevices.getUserMedia({ video: withVideo, audio: true });
       document.getElementById('local-video').srcObject = localStream;
-      document.getElementById('call-overlay').classList.add('show');
+      document.getElementById('call-panel').classList.add('active');
       document.getElementById('call-status').textContent = 'Calling...';
       
       pc = createPeerConnection();
@@ -483,6 +503,7 @@
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit('call-offer', { offer, withVideo });
+      updateUpgradeBtn();
     } catch(e) { alert('Camera/mic access denied: ' + e.message); }
   }
 
@@ -514,7 +535,7 @@
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
     document.getElementById('remote-video').srcObject = null;
     document.getElementById('local-video').srcObject = null;
-    document.getElementById('call-overlay').classList.remove('show');
+    document.getElementById('call-panel').classList.remove('active');
     iceCandidatesQueue = [];
     socket.emit('call-end');
   }
@@ -607,7 +628,7 @@
       if (localStream) localStream.getTracks().forEach(t => t.stop());
       localStream = await navigator.mediaDevices.getUserMedia({ video: pendingWithVideo, audio: true });
       document.getElementById('local-video').srcObject = localStream;
-      document.getElementById('call-overlay').classList.add('show');
+      document.getElementById('call-panel').classList.add('active');
       document.getElementById('call-status').textContent = 'Connecting...';
       
       pc = createPeerConnection();
