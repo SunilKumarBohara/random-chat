@@ -9,22 +9,21 @@ const io = new Server(server, { maxHttpBufferSize: 10 * 1024 * 1024 });
 
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Serve setup.html as default
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
+
 const waitingUsers = [];
 const activePairs = {};
 
 function findMatch(socket, data) {
   const { nickname, gender, pref, age } = data;
-
   let matchIndex = waitingUsers.findIndex(u => {
     if (u.id === socket.id) return false;
-    const iWantThem = pref === 'anyone' || pref === u.gender;
-    const theyWantMe = u.pref === 'anyone' || u.pref === gender;
-    return iWantThem && theyWantMe;
+    const iWant = pref === 'anyone' || pref === u.gender;
+    const theyWant = u.pref === 'anyone' || u.pref === gender;
+    return iWant && theyWant;
   });
-
-  if (matchIndex === -1)
-    matchIndex = waitingUsers.findIndex(u => u.id !== socket.id);
-
+  if (matchIndex === -1) matchIndex = waitingUsers.findIndex(u => u.id !== socket.id);
   if (matchIndex !== -1) {
     const partner = waitingUsers.splice(matchIndex, 1)[0];
     activePairs[socket.id] = partner.id;
@@ -32,63 +31,44 @@ function findMatch(socket, data) {
     io.to(socket.id).emit('matched', { partnerNickname: partner.nickname, partnerGender: partner.gender, partnerAge: partner.age });
     io.to(partner.id).emit('matched', { partnerNickname: nickname, partnerGender: gender, partnerAge: age });
   } else {
-    // Only add to waiting if not already there
-    const alreadyWaiting = waitingUsers.find(u => u.id === socket.id);
-    if (!alreadyWaiting) {
+    if (!waitingUsers.find(u => u.id === socket.id)) {
       waitingUsers.push({ id: socket.id, nickname, gender, pref, age });
     }
     socket.emit('waiting');
   }
 }
 
+function getPartner(socket) { return activePairs[socket.id]; }
+
 io.on('connection', (socket) => {
-  socket.on('find-match', (data) => findMatch(socket, data));
+  socket.on('find-match', data => findMatch(socket, data));
+  socket.on('message', ({ text }) => { const p = getPartner(socket); if(p) io.to(p).emit('message', { text }); });
+  socket.on('photo', ({ dataUrl }) => { const p = getPartner(socket); if(p) io.to(p).emit('photo', { dataUrl }); });
+  socket.on('voice', ({ dataUrl, duration }) => { const p = getPartner(socket); if(p) io.to(p).emit('voice', { dataUrl, duration }); });
+  socket.on('typing', () => { const p = getPartner(socket); if(p) io.to(p).emit('typing'); });
+  socket.on('typing-stop', () => { const p = getPartner(socket); if(p) io.to(p).emit('typing-stop'); });
 
-  socket.on('message', ({ text }) => {
-    const partnerId = activePairs[socket.id];
-    if (partnerId) io.to(partnerId).emit('message', { text });
-  });
-
-  socket.on('photo', ({ dataUrl }) => {
-    const partnerId = activePairs[socket.id];
-    if (partnerId) io.to(partnerId).emit('photo', { dataUrl });
-  });
-
-  socket.on('voice', ({ dataUrl, duration }) => {
-    const partnerId = activePairs[socket.id];
-    if (partnerId) io.to(partnerId).emit('voice', { dataUrl, duration });
-  });
-
-  socket.on('typing', () => {
-    const partnerId = activePairs[socket.id];
-    if (partnerId) io.to(partnerId).emit('typing');
-  });
-
-  socket.on('typing-stop', () => {
-    const partnerId = activePairs[socket.id];
-    if (partnerId) io.to(partnerId).emit('typing-stop');
-  });
+  // WebRTC signaling
+  socket.on('call-offer', ({ offer, withVideo }) => { const p = getPartner(socket); if(p) io.to(p).emit('call-offer', { offer, withVideo }); });
+  socket.on('call-answer', ({ answer }) => { const p = getPartner(socket); if(p) io.to(p).emit('call-answer', { answer }); });
+  socket.on('ice-candidate', ({ candidate }) => { const p = getPartner(socket); if(p) io.to(p).emit('ice-candidate', { candidate }); });
+  socket.on('call-reject', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-reject'); });
+  socket.on('call-end', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-end'); });
 
   socket.on('next', () => {
-    const partnerId = activePairs[socket.id];
-    if (partnerId) {
-      io.to(partnerId).emit('partner-left');
-      delete activePairs[partnerId];
-    }
+    const p = getPartner(socket);
+    if(p) { io.to(p).emit('partner-left'); delete activePairs[p]; }
     delete activePairs[socket.id];
     const idx = waitingUsers.findIndex(u => u.id === socket.id);
-    if (idx !== -1) waitingUsers.splice(idx, 1);
+    if(idx !== -1) waitingUsers.splice(idx, 1);
     socket.emit('disconnected-next');
   });
 
   socket.on('disconnect', () => {
     const idx = waitingUsers.findIndex(u => u.id === socket.id);
-    if (idx !== -1) waitingUsers.splice(idx, 1);
-    const partnerId = activePairs[socket.id];
-    if (partnerId) {
-      io.to(partnerId).emit('partner-left');
-      delete activePairs[partnerId];
-    }
+    if(idx !== -1) waitingUsers.splice(idx, 1);
+    const p = getPartner(socket);
+    if(p) { io.to(p).emit('partner-left'); delete activePairs[p]; }
     delete activePairs[socket.id];
   });
 });
