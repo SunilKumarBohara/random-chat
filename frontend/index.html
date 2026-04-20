@@ -8,13 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0d0d0f;
-      --surface: rgba(22, 22, 26, 0.8);
-      --accent: #ff3d6b;
-      --accent2: #7b5cfa;
-      --text: #f0f0f5;
-      --muted: #888899;
-      --border: rgba(42, 42, 53, 0.5);
+      --bg: #08080a;
+      --surface: #121217;
+      --accent: linear-gradient(135deg, #ff3d6b, #7b5cfa);
+      --accent-solid: #7b5cfa;
+      --accent2: #ff3d6b;
+      --text: #f8f9fa;
+      --muted: #8e8e9c;
+      --border: rgba(255,255,255,0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -27,6 +28,7 @@
       justify-content: center;
       overflow: hidden;
       position: relative;
+      background: radial-gradient(circle at top right, #1a1a2e 0%, #08080a 100%);
     }
     .hero-bg {
       position: fixed;
