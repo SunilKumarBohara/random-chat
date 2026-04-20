@@ -24,8 +24,8 @@
     #status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
     #status-dot.online{background:var(--green);box-shadow:0 0 5px var(--green);}
     .header-right{display:flex;gap:5px;flex-shrink:0;}
-    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:24px;color:var(--text);padding:24px 42px;font-size:1.4rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);white-space:nowrap;font-weight:800;display:flex;align-items:center;justify-content:center;gap:14px;flex-shrink:0;box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
-    .hbtn:active{transform:scale(0.9);}
+    .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:18px;color:var(--text);padding:16px 28px;font-size:1.1rem;cursor:pointer;font-family:'Syne',sans-serif;transition:all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);white-space:nowrap;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0;box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
+    .hbtn:active{transform:scale(0.95);}
     .hbtn:hover{border-color:var(--accent2);transform:translateY(-3px);box-shadow: 0 10px 30px rgba(123,92,250,0.4);background:var(--surface);}
     
     .hbtn svg { width: 22px; height: 22px; fill: currentColor; }
@@ -92,12 +92,14 @@
     #call-status{position:absolute;top:10px;left:0;right:0;text-align:center;color:#fff;font-size:0.9rem;font-weight:900;z-index:2;text-shadow: 0 2px 20px rgba(0,0,0,1);pointer-events: none;}
     
     #call-controls{display:flex;justify-content:center;gap:24px;padding:32px;background:#0d0d0f;border-top:1px solid rgba(255,255,255,0.05);flex-shrink: 0;}
-    .ctrl-btn{width:82px;height:82px;border-radius:28px;border:none;cursor:pointer;font-size:1.8rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);box-shadow: 0 12px 30px rgba(0,0,0,0.4);}
-    .ctrl-btn svg { width: 34px; height: 34px; fill: currentColor; }
-    .ctrl-btn:hover{transform:scale(1.1) translateY(-4px);background:var(--border);box-shadow: 0 18px 40px rgba(0,0,0,0.6);}
-    .ctrl-btn.active{background:rgba(255,255,255,0.15);color:var(--accent);}
-    .ctrl-btn.end{background:#ff3b30;color:#fff;box-shadow: 0 12px 35px rgba(255,59,48,0.5);}
-    .ctrl-btn.upgrade{background:var(--green);color:#000;display:none;box-shadow: 0 12px 30px rgba(0,229,160,0.3);}
+    .ctrl-btn{width:64px;height:64px;border-radius:20px;border:none;cursor:pointer;font-size:1.4rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
+    .ctrl-btn svg { width: 26px; height: 26px; fill: currentColor; }
+    .ctrl-btn:hover{transform:scale(1.1) translateY(-3px);background:var(--border);box-shadow: 0 12px 30px rgba(0,0,0,0.5);}
+    .ctrl-btn.active{background:rgba(255,255,255,0.2);color:var(--accent);}
+    .ctrl-btn.end{background:#ff3b30;color:#fff;box-shadow: 0 8px 25px rgba(255,59,48,0.4);}
+    .ctrl-btn.screen{color:#34c759;}
+    .ctrl-btn.screen.active{background:rgba(52,199,89,0.2);}
+    .ctrl-btn.upgrade{background:var(--green);color:#000;display:none;box-shadow: 0 8px 20px rgba(0,229,160,0.2);}
     .ctrl-btn.upgrade.show{display:flex;}
     
     #resize-handle {
@@ -149,7 +151,7 @@
     .notify-name { font-weight: 800; font-size: 1rem; color: var(--accent); margin-bottom: 2px; }
     .notify-type { font-size: 0.75rem; color: var(--muted); }
     .notify-btns { display: flex; gap: 10px; }
-    .nbtn { width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer; color: #fff; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+    .nbtn { width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; color: #fff; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
     .nbtn:hover { transform: scale(1.1); }
     .nbtn.accept { background: var(--green); }
     .nbtn.reject { background: var(--accent); }
@@ -194,14 +196,14 @@
 
     #typing-bar{padding:3px 14px;font-size:.73rem;color:var(--muted);font-style:italic;height:20px;flex-shrink:0;background:var(--bg);}
 
-    #input-area{background:var(--surface);border-top:1px solid var(--border);padding:12px 14px;display:flex;gap:8px;align-items:center;flex-shrink:0;}
-    .ibtn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--muted);width:48px;height:48px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    #input-area{background:var(--surface);border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:6px;align-items:center;flex-shrink:0;}
+    .ibtn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--muted);width:40px;height:40px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
     .ibtn:hover{border-color:var(--accent2);color:var(--text);}
     .ibtn.recording{border-color:var(--accent);color:var(--accent);animation:pulse 1s infinite;}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-    #msg-input{flex:1;padding:12px 18px;border-radius:24px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;transition:border-color .2s;min-width:0;}
+    #msg-input{flex:1;padding:10px 16px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;outline:none;transition:border-color .2s;min-width:0;}
     #msg-input:focus{border-color:var(--accent2);}
-    #send-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;padding:12px 20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;flex-shrink:0;transition:opacity .2s;}
+    #send-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;padding:10px 18px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;flex-shrink:0;transition:opacity .2s;}
     #send-btn:hover{opacity:.85;}
     #photo-input{display:none;}
 
@@ -257,18 +259,18 @@
         left: 0;
         right: 0;
         width: 100% !important;
-        height: 65% !important;
+        height: 60% !important;
         z-index: 2000;
-        border-radius: 40px 40px 0 0;
+        border-radius: 30px 30px 0 0;
         resize: none;
       }
-      .hbtn{padding:24px 16px;font-size:1.4rem;flex:1;}
-      .hbtn.close-btn { flex: 0 0 60px; }
-      .ctrl-btn{width:76px;height:76px;font-size:1.8rem;}
-      #header{padding:12px 10px;flex-wrap:wrap;}
-      .header-right{width:100%;justify-content:center;margin-top:12px; gap: 12px;}
-      .ibtn { width: 56px; height: 56px; font-size: 1.4rem; }
-      #send-btn { padding: 14px 24px; font-size: 1.1rem; }
+      .hbtn{padding:16px 12px;font-size:1.1rem;flex:1;}
+      .hbtn.close-btn { flex: 0 0 50px; }
+      .ctrl-btn{width:56px;height:56px;font-size:1.3rem;}
+      #header{padding:10px 8px;flex-wrap:wrap;}
+      .header-right{width:100%;justify-content:center;margin-top:8px; gap: 8px;}
+      .ibtn { width: 44px; height: 44px; font-size: 1.2rem; }
+      #send-btn { padding: 10px 18px; font-size: 0.95rem; }
     }
   </style>
 </head>
@@ -349,10 +351,13 @@
       <button class="ctrl-btn cam" id="cam-btn" onclick="toggleCam()" title="Video On/Off">
         <svg viewBox="0 0 24 24" id="cam-icon"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
       </button>
+      <button class="ctrl-btn screen" id="screen-btn" onclick="toggleScreenShare()" title="Share Screen">
+        <svg viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+      </button>
       <button class="ctrl-btn upgrade" id="upgrade-btn" onclick="requestUpgrade()" title="Switch to Video">
         <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
       </button>
-      <button class="ctrl-btn end" onclick="endCall()" title="End Call">
+      <button class="ctrl-btn end" onclick="endCall()" title="Hang Up">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
       </button>
     </div>
@@ -634,14 +639,16 @@
     pendingOffer = null;
   }
 
-  let isCallActive = false;
-  const ringtone = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+  let isCallActive = false, isScreenSharing = false;
+  const ringtone = new Audio('https://www.soundboard.com/handler/DownLoadTrack.ashx?cliptitle=iPhone+Original+Ringtone&filename=mt/MTI2NDU1NjgyMTI2NDU1_7y_2fXn_2fT_2b_2f8.mp3');
   ringtone.loop = true;
 
   function endCall(sendSignal = true, quiet = false) {
     console.log("Ending call. isCallActive:", isCallActive, "quiet:", quiet);
     ringtone.pause();
     ringtone.currentTime = 0;
+    
+    if (isScreenSharing) stopScreenShare();
     
     if (!isCallActive) {
       cleanupCallUI();
@@ -667,6 +674,38 @@
     
     if (sendSignal) socket.emit('call-end');
     if (!quiet) addMessage('Call ended.', 'system', false, false, 0, false);
+  }
+
+  async function toggleScreenShare() {
+    if (!pc) return;
+    if (!isScreenSharing) {
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const videoTrack = screenStream.getVideoTracks()[0];
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        
+        if (sender) sender.replaceTrack(videoTrack);
+        else pc.addTrack(videoTrack, screenStream);
+        
+        videoTrack.onended = () => stopScreenShare();
+        document.getElementById('local-video').srcObject = screenStream;
+        document.getElementById('screen-btn').classList.add('active');
+        isScreenSharing = true;
+      } catch (e) { console.error("Screen share failed:", e); }
+    } else {
+      stopScreenShare();
+    }
+  }
+
+  async function stopScreenShare() {
+    if (!isScreenSharing) return;
+    const videoTrack = localStream.getVideoTracks()[0];
+    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+    if (sender && videoTrack) sender.replaceTrack(videoTrack);
+    
+    document.getElementById('local-video').srcObject = localStream;
+    document.getElementById('screen-btn').classList.remove('active');
+    isScreenSharing = false;
   }
 
   function cleanupCallUI() {
