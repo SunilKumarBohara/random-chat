@@ -219,20 +219,21 @@
     .sclose{padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;}
 
     @media(max-width:480px){
-      #call-overlay {
-        top: auto;
+      #call-panel.active {
+        position: fixed;
         bottom: 0;
-        right: 0;
         left: 0;
-        width: 100%;
-        height: 45%;
-        border-radius: 24px 24px 0 0;
-        border: none;
-        border-top: 1px solid var(--border);
+        right: 0;
+        width: 100% !important;
+        height: 60% !important;
+        z-index: 1000;
+        border-radius: 30px 30px 0 0;
+        resize: none;
       }
-      .hbtn{padding:5px 7px;font-size:.7rem;}
-      .ctrl-btn{width:42px;height:42px;font-size:1rem;}
-      #header{padding:8px 10px;}
+      .hbtn{padding:16px 12px;font-size:1.1rem;flex:1;}
+      .ctrl-btn{width:56px;height:56px;font-size:1.3rem;}
+      #header{padding:12px 10px;flex-wrap:wrap;}
+      .header-right{width:100%;justify-content:center;margin-top:8px;}
     }
   </style>
 </head>
@@ -534,27 +535,52 @@
     } catch(e) { alert('Camera/mic access denied: ' + e.message); }
   }
 
+  let pendingOffer = null, pendingWithVideo = false;
+
   async function handleOffer(offer, withVideo) {
-    isVideoCall = withVideo;
-    if (!confirm(`Stranger wants to start a ${withVideo ? 'video' : 'voice'} call. Accept?`)) {
-      socket.emit('call-reject'); return;
-    }
+    pendingOffer = offer;
+    pendingWithVideo = withVideo;
+    showCallNotify(withVideo);
+  }
+
+  function showCallNotify(withVideo) {
+    document.getElementById('notify-name').textContent = document.getElementById('partner-name').textContent || 'Stranger';
+    document.getElementById('notify-type').textContent = (withVideo ? 'Video' : 'Voice') + ' Call Incoming...';
+    document.getElementById('call-notify').classList.add('show');
+  }
+
+  function rejectCall() {
+    document.getElementById('call-notify').classList.remove('show');
+    socket.emit('call-reject');
+    pendingOffer = null;
+  }
+
+  async function acceptCall() {
+    document.getElementById('call-notify').classList.remove('show');
+    if (!pendingOffer) return;
+    isVideoCall = pendingWithVideo;
     try {
       if (localStream) localStream.getTracks().forEach(t => t.stop());
-      localStream = await navigator.mediaDevices.getUserMedia({ video: withVideo, audio: true });
+      localStream = await navigator.mediaDevices.getUserMedia({ video: pendingWithVideo, audio: true });
       document.getElementById('local-video').srcObject = localStream;
-      document.getElementById('call-overlay').classList.add('show');
+      document.getElementById('call-panel').classList.add('active');
       document.getElementById('call-status').textContent = 'Connecting...';
       
       pc = createPeerConnection();
       localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
       
-      await pc.setRemoteDescription(offer);
+      await pc.setRemoteDescription(pendingOffer);
       processQueuedCandidates();
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit('call-answer', { answer });
-    } catch(e) { alert('Camera/mic access denied: ' + e.message); }
+      
+      updateUpgradeBtn();
+      isCallActive = true;
+    } catch(e) { 
+      alert('Access denied: ' + e.message + (window.location.protocol !== 'https:' ? '\nNote: Calls require HTTPS!' : '')); 
+    }
+    pendingOffer = null;
   }
 
   let isCallActive = false;
@@ -630,53 +656,6 @@
     } catch (e) {
       alert('Could not start video: ' + e.message);
     }
-  }
-
-  let pendingOffer = null, pendingWithVideo = false;
-
-  async function handleOffer(offer, withVideo) {
-    pendingOffer = offer;
-    pendingWithVideo = withVideo;
-    showCallNotify(withVideo);
-  }
-
-  function showCallNotify(withVideo) {
-    document.getElementById('notify-name').textContent = document.getElementById('partner-name').textContent;
-    document.getElementById('notify-type').textContent = (withVideo ? 'Video' : 'Voice') + ' Call Incoming...';
-    document.getElementById('call-notify').classList.add('show');
-    // Play sound if possible
-  }
-
-  function rejectCall() {
-    document.getElementById('call-notify').classList.remove('show');
-    socket.emit('call-reject');
-    pendingOffer = null;
-  }
-
-  async function acceptCall() {
-    document.getElementById('call-notify').classList.remove('show');
-    if (!pendingOffer) return;
-    isVideoCall = pendingWithVideo;
-    try {
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      localStream = await navigator.mediaDevices.getUserMedia({ video: pendingWithVideo, audio: true });
-      document.getElementById('local-video').srcObject = localStream;
-      document.getElementById('call-panel').classList.add('active');
-      document.getElementById('call-status').textContent = 'Connecting...';
-      
-      pc = createPeerConnection();
-      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-      
-      await pc.setRemoteDescription(pendingOffer);
-      processQueuedCandidates();
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('call-answer', { answer });
-      
-      updateUpgradeBtn();
-      isCallActive = true;
-    } catch(e) { alert('Access denied: ' + e.message); }
-    pendingOffer = null;
   }
 
   function updateUpgradeBtn() {
