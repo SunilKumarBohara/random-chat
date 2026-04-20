@@ -552,7 +552,7 @@
     typingTimeout = setTimeout(() => socket.emit('typing-stop'), 1500);
   }
 
-  // Improved Voice Recorder: Hold to record, slide to cancel
+  // Improved Voice Recorder: Hold-to-record for Mobile, Click-to-record for PC
   const voiceBtn = document.getElementById('voice-btn');
   const voiceHint = document.getElementById('voice-hint');
   const recOverlay = document.getElementById('recording-overlay');
@@ -560,22 +560,69 @@
   const recTimerText = document.getElementById('rec-timer');
   
   let recStartTime = 0, recInterval = null;
-  let isDraggingVoice = false, startVoiceX = 0, isVoiceCanceled = false;
+  let startVoiceX = 0, isVoiceCanceled = false;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   // Show hint for first-time users
   if (!localStorage.getItem('voiceHintShown')) {
     setTimeout(() => {
+      voiceHint.textContent = isMobile ? "Hold to record audio" : "Click to record audio";
       voiceHint.style.display = 'block';
       setTimeout(() => voiceHint.style.display = 'none', 5000);
       localStorage.setItem('voiceHintShown', 'true');
     }, 2000);
   }
 
-  voiceBtn.onpointerdown = async (e) => {
-    if (!isConnected) return;
-    e.preventDefault();
-    voiceBtn.setPointerCapture(e.pointerId);
-    
+  if (isMobile) {
+    // MOBILE: Hold to record
+    voiceBtn.onpointerdown = async (e) => {
+      if (!isConnected) return;
+      e.preventDefault();
+      voiceBtn.setPointerCapture(e.pointerId);
+      startRecording();
+      startVoiceX = e.clientX;
+    };
+
+    voiceBtn.onpointermove = (e) => {
+      if (!isRecording) return;
+      const diff = startVoiceX - e.clientX;
+      if (diff > 80) {
+        isVoiceCanceled = true;
+        recHintText.textContent = "Release to cancel";
+        recHintText.classList.add('cancel');
+      } else {
+        isVoiceCanceled = false;
+        recHintText.textContent = "Slide left to cancel";
+        recHintText.classList.remove('cancel');
+      }
+    };
+
+    voiceBtn.onpointerup = (e) => {
+      if (!isRecording) return;
+      stopVoiceRecording();
+      if (voiceBtn.hasPointerCapture(e.pointerId)) voiceBtn.releasePointerCapture(e.pointerId);
+    };
+  } else {
+    // PC: Click to record
+    voiceBtn.onclick = () => {
+      if (!isConnected) return;
+      if (!isRecording) {
+        startRecording();
+        recHintText.innerHTML = 'Click microphone again to <b>Send</b> or <span style="color:#ff3b30;cursor:pointer;text-decoration:underline;" onclick="cancelPCRecording(event)">Cancel</span>';
+      } else {
+        isVoiceCanceled = false;
+        stopVoiceRecording();
+      }
+    };
+  }
+
+  window.cancelPCRecording = (e) => {
+    e.stopPropagation();
+    isVoiceCanceled = true;
+    stopVoiceRecording();
+  };
+
+  async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream);
@@ -600,12 +647,11 @@
       mediaRecorder.start();
       isRecording = true;
       isVoiceCanceled = false;
-      startVoiceX = e.clientX;
       
-      // UI feedback
       recOverlay.style.display = 'flex';
-      recHintText.textContent = "Slide left to cancel";
-      recHintText.classList.remove('cancel');
+      if (isMobile) {
+        recHintText.textContent = "Slide left to cancel";
+      }
       
       recInterval = setInterval(() => {
         const s = Math.floor((Date.now() - recStartTime) / 1000);
@@ -613,27 +659,7 @@
       }, 500);
 
     } catch (err) { alert('Microphone access denied.'); }
-  };
-
-  voiceBtn.onpointermove = (e) => {
-    if (!isRecording) return;
-    const diff = startVoiceX - e.clientX;
-    if (diff > 80) { // Dragged 80px left
-      isVoiceCanceled = true;
-      recHintText.textContent = "Release to cancel";
-      recHintText.classList.add('cancel');
-    } else {
-      isVoiceCanceled = false;
-      recHintText.textContent = "Slide left to cancel";
-      recHintText.classList.remove('cancel');
-    }
-  };
-
-  voiceBtn.onpointerup = (e) => {
-    if (!isRecording) return;
-    stopVoiceRecording();
-    if (voiceBtn.hasPointerCapture(e.pointerId)) voiceBtn.releasePointerCapture(e.pointerId);
-  };
+  }
 
   voiceBtn.onpointercancel = (e) => {
     if (!isRecording) return;
