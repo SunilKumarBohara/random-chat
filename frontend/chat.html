@@ -272,6 +272,51 @@
       .ibtn { width: 44px; height: 44px; font-size: 1.2rem; }
       #send-btn { padding: 10px 18px; font-size: 0.95rem; }
     }
+    
+    .hbtn.hidden { display: none !important; }
+    
+    #voice-hint {
+      position: absolute;
+      bottom: 70px;
+      left: 10px;
+      background: var(--accent2);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      pointer-events: none;
+      animation: bounce 2s infinite;
+      display: none;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    #voice-hint::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 15px;
+      border: 6px solid transparent;
+      border-top-color: var(--accent2);
+    }
+    @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } 60% { transform: translateY(-3px); } }
+    
+    #recording-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(13, 13, 15, 0.95);
+      z-index: 90;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 15px;
+      color: #fff;
+    }
+    .rec-status { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+    .rec-dot { width: 12px; height: 12px; background: #ff3b30; border-radius: 50%; animation: pulse 1s infinite; }
+    .rec-hint { font-size: 0.85rem; color: var(--muted); }
+    .rec-hint.cancel { color: #ff3b30; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -287,11 +332,11 @@
         </div>
       </div>
       <div class="header-right">
-        <button class="hbtn call-btn" onclick="startCall(false)">
+        <button class="hbtn call-btn hidden" id="header-call-btn" onclick="startCall(false)">
           <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg> 
           Call
         </button>
-        <button class="hbtn video-btn" onclick="startCall(true)">
+        <button class="hbtn video-btn hidden" id="header-video-btn" onclick="startCall(true)">
           <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
           Video
         </button>
@@ -318,8 +363,13 @@
     <div id="chat-wrapper">
       <div id="messages"></div>
       <div id="typing-bar"></div>
+      <div id="recording-overlay">
+        <div class="rec-status"><div class="rec-dot"></div> <span id="rec-timer">0:00</span></div>
+        <div class="rec-hint" id="rec-hint">Slide left to cancel</div>
+      </div>
       <div id="input-area">
-        <button class="ibtn" id="voice-btn" onclick="toggleRecording()" title="Voice message">🎙️</button>
+        <div id="voice-hint">Hold to record audio</div>
+        <button class="ibtn" id="voice-btn" title="Hold to record">🎙️</button>
         <button class="ibtn" onclick="document.getElementById('photo-input').click()" title="Photo">📷</button>
         <input type="file" id="photo-input" accept="image/*" onchange="sendPhoto(event)"/>
         <input type="text" id="msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" oninput="handleTyping()"/>
@@ -502,35 +552,101 @@
     typingTimeout = setTimeout(() => socket.emit('typing-stop'), 1500);
   }
 
-  async function toggleRecording() {
+  // Improved Voice Recorder: Hold to record, slide to cancel
+  const voiceBtn = document.getElementById('voice-btn');
+  const voiceHint = document.getElementById('voice-hint');
+  const recOverlay = document.getElementById('recording-overlay');
+  const recHintText = document.getElementById('rec-hint');
+  const recTimerText = document.getElementById('rec-timer');
+  
+  let recStartTime = 0, recInterval = null;
+  let isDraggingVoice = false, startVoiceX = 0, isVoiceCanceled = false;
+
+  // Show hint for first-time users
+  if (!localStorage.getItem('voiceHintShown')) {
+    setTimeout(() => {
+      voiceHint.style.display = 'block';
+      setTimeout(() => voiceHint.style.display = 'none', 5000);
+      localStorage.setItem('voiceHintShown', 'true');
+    }, 2000);
+  }
+
+  voiceBtn.onpointerdown = async (e) => {
     if (!isConnected) return;
-    const btn = document.getElementById('voice-btn');
-    if (!isRecording) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        const t0 = Date.now();
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-          const dur = (Date.now()-t0)/1000;
+    e.preventDefault();
+    voiceBtn.setPointerCapture(e.pointerId);
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      recStartTime = Date.now();
+      
+      mediaRecorder.ondataavailable = ev => audioChunks.push(ev.data);
+      mediaRecorder.onstop = () => {
+        const dur = (Date.now() - recStartTime) / 1000;
+        if (!isVoiceCanceled && dur > 0.5) {
           const blob = new Blob(audioChunks, { type: 'audio/webm' });
           const reader = new FileReader();
-          reader.onload = ev => { socket.emit('voice', { dataUrl: ev.target.result, duration: dur }); addMessage(ev.target.result, 'me', false, true, dur); };
+          reader.onload = ev => { 
+            socket.emit('voice', { dataUrl: ev.target.result, duration: dur }); 
+            addMessage(ev.target.result, 'me', false, true, dur); 
+          };
           reader.readAsDataURL(blob);
-          stream.getTracks().forEach(t => t.stop());
-        };
-        mediaRecorder.start();
-        isRecording = true;
-        btn.classList.add('recording');
-        btn.textContent = '⏹';
-      } catch { alert('Microphone access denied.'); }
+        }
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      isVoiceCanceled = false;
+      startVoiceX = e.clientX;
+      
+      // UI feedback
+      recOverlay.style.display = 'flex';
+      recHintText.textContent = "Slide left to cancel";
+      recHintText.classList.remove('cancel');
+      
+      recInterval = setInterval(() => {
+        const s = Math.floor((Date.now() - recStartTime) / 1000);
+        recTimerText.textContent = fmt(s);
+      }, 500);
+
+    } catch (err) { alert('Microphone access denied.'); }
+  };
+
+  voiceBtn.onpointermove = (e) => {
+    if (!isRecording) return;
+    const diff = startVoiceX - e.clientX;
+    if (diff > 80) { // Dragged 80px left
+      isVoiceCanceled = true;
+      recHintText.textContent = "Release to cancel";
+      recHintText.classList.add('cancel');
     } else {
-      mediaRecorder.stop();
-      isRecording = false;
-      btn.classList.remove('recording');
-      btn.textContent = '🎙️';
+      isVoiceCanceled = false;
+      recHintText.textContent = "Slide left to cancel";
+      recHintText.classList.remove('cancel');
     }
+  };
+
+  voiceBtn.onpointerup = (e) => {
+    if (!isRecording) return;
+    stopVoiceRecording();
+    if (voiceBtn.hasPointerCapture(e.pointerId)) voiceBtn.releasePointerCapture(e.pointerId);
+  };
+
+  voiceBtn.onpointercancel = (e) => {
+    if (!isRecording) return;
+    isVoiceCanceled = true;
+    stopVoiceRecording();
+  };
+
+  function stopVoiceRecording() {
+    if (!isRecording) return;
+    isRecording = false;
+    if (mediaRecorder) mediaRecorder.stop();
+    recOverlay.style.display = 'none';
+    clearInterval(recInterval);
   }
 
   // WebRTC
@@ -797,6 +913,7 @@
     document.getElementById('status-text').textContent = 'Looking...';
     document.getElementById('disc-overlay').classList.remove('show');
     isConnected = false;
+    updateHeaderButtons();
   }
 
   function overlayNext() {
@@ -806,7 +923,20 @@
     document.getElementById('status-dot').className = '';
     document.getElementById('status-text').textContent = 'Looking...';
     isConnected = false;
+    updateHeaderButtons();
     socket.emit('find-match', { nickname, gender: myGender, pref: isPremium ? currentChatPref : myPref, age: myAge });
+  }
+
+  function updateHeaderButtons() {
+    const callBtn = document.getElementById('header-call-btn');
+    const videoBtn = document.getElementById('header-video-btn');
+    if (isConnected) {
+      callBtn.classList.remove('hidden');
+      videoBtn.classList.remove('hidden');
+    } else {
+      callBtn.classList.add('hidden');
+      videoBtn.classList.add('hidden');
+    }
   }
 
   function goHome() { endCall(); socket.emit('next'); window.location.href = 'index.html'; }
@@ -866,6 +996,7 @@
     const g = partnerGender === 'male' ? '♂' : partnerGender === 'female' ? '♀' : '⚧';
     document.getElementById('status-text').textContent = partnerAge ? `${g} ${partnerGender}, ${partnerAge} yrs` : `${g} ${partnerGender} • Connected`;
     addMessage(`You are now chatting with ${partnerNickname}!`, 'system', false, false, 0, false);
+    updateHeaderButtons();
   });
 
   socket.on('message', ({ text }) => addMessage(text, 'them'));
@@ -880,6 +1011,7 @@
     document.getElementById('status-dot').className = '';
     document.getElementById('status-text').textContent = 'Disconnected';
     document.getElementById('disc-overlay').classList.add('show');
+    updateHeaderButtons();
   });
 
   socket.on('disconnected-next', () => {
