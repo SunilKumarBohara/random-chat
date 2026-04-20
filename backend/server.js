@@ -62,6 +62,9 @@ io.on('connection', (socket) => {
   socket.on('ice-candidate', ({ candidate }) => { const p = getPartner(socket); if(p) io.to(p).emit('ice-candidate', { candidate }); });
   socket.on('call-reject', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-reject'); });
   socket.on('call-end', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-end'); });
+  socket.on('call-upgrade', ({ withVideo }) => { const p = getPartner(socket); if(p) io.to(p).emit('call-upgrade', { withVideo }); });
+  socket.on('call-upgrade-accept', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-upgrade-accept'); });
+  socket.on('call-upgrade-reject', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-upgrade-reject'); });
 
   socket.on('next', () => {
     const p = getPartner(socket);

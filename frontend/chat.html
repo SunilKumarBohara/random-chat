@@ -38,18 +38,68 @@
     .fpill{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:.73rem;cursor:pointer;transition:all .2s;}
     .fpill.active{border-color:var(--accent);background:rgba(255,61,107,.12);color:var(--text);}
 
-    #call-overlay{display:none;position:fixed;inset:0;background:#000;z-index:50;flex-direction:column;}
-    #call-overlay.show{display:flex;}
-    #videos{flex:1;position:relative;background:#111;}
+    #call-overlay {
+      display: none;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 320px;
+      height: 480px;
+      background: #000;
+      z-index: 50;
+      flex-direction: column;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      border: 1px solid var(--border);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #call-overlay.show { display: flex; animation: callIn 0.5s ease; }
+    @keyframes callIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    
+    #videos{flex:1;position:relative;background:#111;overflow:hidden;}
     #remote-video{width:100%;height:100%;object-fit:cover;background:#111;}
-    #local-video{position:absolute;bottom:16px;right:16px;width:100px;height:130px;object-fit:cover;border-radius:12px;border:2px solid var(--border);background:#222;}
-    #call-status{position:absolute;top:16px;left:0;right:0;text-align:center;color:rgba(255,255,255,.75);font-size:.85rem;font-family:'DM Sans',sans-serif;}
-    #call-controls{display:flex;justify-content:center;gap:16px;padding:20px 16px;background:#0d0d0f;flex-shrink:0;}
-    .ctrl-btn{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;font-size:1.3rem;display:flex;align-items:center;justify-content:center;transition:transform .2s;}
-    .ctrl-btn:hover{transform:scale(1.08);}
-    .ctrl-btn.mute{background:var(--surface2);}
-    .ctrl-btn.cam{background:var(--surface2);}
-    .ctrl-btn.end{background:var(--accent);}
+    #local-video{position:absolute;bottom:12px;right:12px;width:90px;height:120px;object-fit:cover;border-radius:12px;border:2px solid rgba(255,255,255,0.1);background:#222;z-index:2;cursor:move;}
+    #call-status{position:absolute;top:12px;left:0;right:0;text-align:center;color:rgba(255,255,255,.9);font-size:.75rem;font-weight:600;text-shadow:0 2px 4px rgba(0,0,0,0.5);z-index:2;}
+    
+    #call-controls{display:flex;justify-content:center;gap:12px;padding:16px;background:rgba(13,13,15,0.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;}
+    .ctrl-btn{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:var(--surface2);color:var(--text);}
+    .ctrl-btn:hover{transform:scale(1.1);background:var(--border);}
+    .ctrl-btn.mute.active{background:rgba(255,255,255,0.15);color:var(--accent);}
+    .ctrl-btn.cam.active{background:rgba(255,255,255,0.15);color:var(--accent2);}
+    .ctrl-btn.end{background:#ff3b30;color:#fff;}
+    .ctrl-btn.upgrade{background:var(--green);color:#1a1200;display:none;}
+    .ctrl-btn.upgrade.show{display:flex;}
+
+    /* Incoming Call Notification */
+    #call-notify {
+      display: none;
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(22, 22, 26, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      padding: 16px 20px;
+      z-index: 100;
+      width: 90%;
+      max-width: 360px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      align-items: center;
+      gap: 16px;
+      animation: notifyIn 0.4s ease;
+    }
+    @keyframes notifyIn { from { top: -100px; } to { top: 24px; } }
+    #call-notify.show { display: flex; }
+    .notify-info { flex: 1; min-width: 0; }
+    .notify-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent); }
+    .notify-type { font-size: 0.75rem; color: var(--muted); }
+    .notify-btns { display: flex; gap: 8px; }
+    .nbtn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; color: #fff; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+    .nbtn.accept { background: var(--green); }
+    .nbtn.reject { background: var(--accent); }
 
     #chat-wrapper{flex:1;position:relative;display:flex;flex-direction:column;overflow:hidden;}
     #messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--bg);}
@@ -129,9 +179,19 @@
     .sclose{padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;}
 
     @media(max-width:480px){
+      #call-overlay {
+        top: auto;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        height: 45%;
+        border-radius: 24px 24px 0 0;
+        border: none;
+        border-top: 1px solid var(--border);
+      }
       .hbtn{padding:5px 7px;font-size:.7rem;}
-      #local-video{width:75px;height:100px;}
-      .ctrl-btn{width:46px;height:46px;font-size:1.1rem;}
+      .ctrl-btn{width:42px;height:42px;font-size:1rem;}
       #header{padding:8px 10px;}
     }
   </style>
@@ -194,9 +254,22 @@
     <div id="call-status">Calling...</div>
   </div>
   <div id="call-controls">
-    <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()">🎙️</button>
-    <button class="ctrl-btn cam" id="cam-btn" onclick="toggleCam()">📹</button>
-    <button class="ctrl-btn end" onclick="endCall()">📵</button>
+    <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()" title="Mute/Unmute">🎙️</button>
+    <button class="ctrl-btn cam" id="cam-btn" onclick="toggleCam()" title="Video On/Off">📹</button>
+    <button class="ctrl-btn upgrade" id="upgrade-btn" onclick="requestUpgrade()" title="Switch to Video">🎬</button>
+    <button class="ctrl-btn end" onclick="endCall()" title="End Call">📵</button>
+  </div>
+</div>
+
+<div id="call-notify">
+  <div style="font-size:1.8rem;">📞</div>
+  <div class="notify-info">
+    <div class="notify-name" id="notify-name">Stranger</div>
+    <div class="notify-type" id="notify-type">Incoming Call</div>
+  </div>
+  <div class="notify-btns">
+    <button class="nbtn reject" onclick="rejectCall()">✕</button>
+    <button class="nbtn accept" onclick="acceptCall()">✓</button>
   </div>
 </div>
 
@@ -450,14 +523,111 @@
     if (!localStream) return;
     isMuted = !isMuted;
     localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-    document.getElementById('mute-btn').textContent = isMuted ? '🔇' : '🎙️';
+    const btn = document.getElementById('mute-btn');
+    btn.textContent = isMuted ? '🔇' : '🎙️';
+    btn.classList.toggle('active', isMuted);
   }
 
   function toggleCam() {
-    if (!localStream || !isVideoCall) return;
+    if (!localStream) return;
+    if (!isVideoCall) {
+      requestUpgrade();
+      return;
+    }
     isCamOff = !isCamOff;
     localStream.getVideoTracks().forEach(t => t.enabled = !isCamOff);
-    document.getElementById('cam-btn').textContent = isCamOff ? '🚫' : '📹';
+    const btn = document.getElementById('cam-btn');
+    btn.textContent = isCamOff ? '🚫' : '📹';
+    btn.classList.toggle('active', isCamOff);
+  }
+
+  async function requestUpgrade() {
+    if (isVideoCall) return;
+    socket.emit('call-upgrade', { withVideo: true });
+    document.getElementById('call-status').textContent = 'Requesting Video...';
+  }
+
+  async function switchToVideo() {
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const videoTrack = newStream.getVideoTracks()[0];
+      
+      if (pc) {
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) {
+          sender.replaceTrack(videoTrack);
+        } else {
+          pc.addTrack(videoTrack, newStream);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('call-offer', { offer, withVideo: true });
+        }
+      }
+      
+      // Update local UI
+      localStream.addTrack(videoTrack);
+      document.getElementById('local-video').srcObject = localStream;
+      isVideoCall = true;
+      isCamOff = false;
+      document.getElementById('cam-btn').classList.remove('active');
+      document.getElementById('cam-btn').textContent = '📹';
+      document.getElementById('upgrade-btn').classList.remove('show');
+      document.getElementById('call-status').textContent = 'Video Active';
+    } catch (e) {
+      alert('Could not start video: ' + e.message);
+    }
+  }
+
+  let pendingOffer = null, pendingWithVideo = false;
+
+  async function handleOffer(offer, withVideo) {
+    pendingOffer = offer;
+    pendingWithVideo = withVideo;
+    showCallNotify(withVideo);
+  }
+
+  function showCallNotify(withVideo) {
+    document.getElementById('notify-name').textContent = document.getElementById('partner-name').textContent;
+    document.getElementById('notify-type').textContent = (withVideo ? 'Video' : 'Voice') + ' Call Incoming...';
+    document.getElementById('call-notify').classList.add('show');
+    // Play sound if possible
+  }
+
+  function rejectCall() {
+    document.getElementById('call-notify').classList.remove('show');
+    socket.emit('call-reject');
+    pendingOffer = null;
+  }
+
+  async function acceptCall() {
+    document.getElementById('call-notify').classList.remove('show');
+    if (!pendingOffer) return;
+    isVideoCall = pendingWithVideo;
+    try {
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      localStream = await navigator.mediaDevices.getUserMedia({ video: pendingWithVideo, audio: true });
+      document.getElementById('local-video').srcObject = localStream;
+      document.getElementById('call-overlay').classList.add('show');
+      document.getElementById('call-status').textContent = 'Connecting...';
+      
+      pc = createPeerConnection();
+      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+      
+      await pc.setRemoteDescription(pendingOffer);
+      processQueuedCandidates();
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('call-answer', { answer });
+      
+      updateUpgradeBtn();
+    } catch(e) { alert('Access denied: ' + e.message); }
+    pendingOffer = null;
+  }
+
+  function updateUpgradeBtn() {
+    const btn = document.getElementById('upgrade-btn');
+    if (!isVideoCall) btn.classList.add('show');
+    else btn.classList.remove('show');
   }
 
   function nextStranger() {
@@ -564,7 +734,26 @@
       await pc.setRemoteDescription(answer); 
       document.getElementById('call-status').textContent = 'Connected'; 
       processQueuedCandidates();
+      updateUpgradeBtn();
     } 
+  });
+
+  socket.on('call-upgrade', ({ withVideo }) => {
+    if (confirm(`Stranger wants to switch to Video Call. Accept?`)) {
+      socket.emit('call-upgrade-accept');
+      switchToVideo();
+    } else {
+      socket.emit('call-upgrade-reject');
+    }
+  });
+
+  socket.on('call-upgrade-accept', () => {
+    switchToVideo();
+  });
+
+  socket.on('call-upgrade-reject', () => {
+    document.getElementById('call-status').textContent = 'Video request declined';
+    setTimeout(() => { if(pc) document.getElementById('call-status').textContent = 'Connected'; }, 2000);
   });
 
   socket.on('ice-candidate', async ({ candidate }) => { 
