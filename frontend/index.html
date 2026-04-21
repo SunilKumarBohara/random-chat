@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChatRoom — Connect Instantly</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070709;
+      --surface: #0f0f14;
+      --surface2: #16161e;
+      --primary: #7c6bfa;
+      --primary-dim: rgba(124,107,250,0.12);
+      --text: #f0f0f5;
+      --muted: #6b6b80;
+      --border: rgba(255,255,255,0.06);
+      --green: #00e5a0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(124,107,250,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(124,107,250,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+    .glow-1 { width: 600px; height: 600px; background: rgba(124,107,250,0.08); top: -200px; left: -100px; }
+    .glow-2 { width: 400px; height: 400px; background: rgba(255,94,87,0.05); bottom: 0; right: -100px; }
+    nav {
+      position: sticky; top: 0; z-index: 100; height: 68px; padding: 0 5%;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7,7,9,0.85); backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text); letter-spacing: -1px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .logo-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 12px var(--primary); }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-btn { padding: 9px 20px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-decoration: none; display: inline-block; }
+    .nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .nav-btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .nav-btn.primary:hover { background: #6b5ae0; transform: translateY(-1px); }
+    .hero { position: relative; z-index: 1; min-height: calc(100vh - 68px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.2);
+      color: var(--green); padding: 7px 18px; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 600; margin-bottom: 28px;
+      font-family: 'DM Mono', monospace; letter-spacing: 0.05em;
+    }
+    .pulse-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; flex-shrink: 0; }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.5); } }
+    .hero-title { font-family: 'Syne', sans-serif; font-size: clamp(3.5rem, 9vw, 7rem); font-weight: 800; line-height: 0.95; letter-spacing: -4px; margin-bottom: 24px; }
+    .hero-title span { color: var(--primary); }
+    .hero-sub { font-size: 1.05rem; color: var(--muted); max-width: 440px; line-height: 1.7; margin-bottom: 44px; }
+    .mode-selector { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 5px; gap: 4px; margin-bottom: 20px; }
+    .mode-opt { padding: 10px 28px; border-radius: 10px; border: none; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; color: var(--muted); background: transparent; }
+    .mode-opt.active { background: var(--primary); color: #fff; }
+    .cta-btn { padding: 18px 72px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.2rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 40px rgba(124,107,250,0.3), 0 8px 20px rgba(0,0,0,0.3); letter-spacing: -0.5px; }
+    .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 0 60px rgba(124,107,250,0.4), 0 16px 32px rgba(0,0,0,0.4); }
+    .features { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto 100px; padding: 0 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; transition: all 0.3s; }
+    .feat-card:hover { border-color: rgba(124,107,250,0.3); transform: translateY(-4px); }
+    .feat-card.wide { grid-column: span 2; }
+    .feat-icon { width: 44px; height: 44px; background: var(--primary-dim); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid rgba(124,107,250,0.15); }
+    .feat-icon svg { width: 22px; height: 22px; fill: var(--primary); }
+    .feat-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+    .feat-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.6; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(7,7,9,0.85); backdrop-filter: blur(16px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-bg.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; width: 100%; max-width: 460px; padding: 40px; animation: modalIn 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; }
+    @keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .modal-close { position: absolute; top: 20px; right: 20px; width: 36px; height: 36px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.9rem; }
+    .modal-close:hover { color: var(--text); border-color: var(--primary); }
+    .modal-title { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+    .modal-title span { color: var(--primary); }
+    .modal-desc { color: var(--muted); font-size: 0.875rem; margin-bottom: 28px; }
+    .field-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 10px; display: block; font-family: 'DM Mono', monospace; }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    .choice-card { padding: 14px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.9rem; color: var(--muted); transition: all 0.2s; }
+    .choice-card:hover { border-color: rgba(124,107,250,0.4); color: var(--text); }
+    .choice-card.selected { background: var(--primary-dim); border-color: var(--primary); color: var(--text); }
+    .age-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 28px; }
+    .age-card { padding: 11px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 11px; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.85rem; color: var(--muted); transition: all 0.2s; }
+    .age-card:hover { border-color: rgba(124,107,250,0.4); color: var(--text); }
+    .age-card.selected { background: var(--primary-dim); border-color: var(--primary); color: var(--text); }
+    .modal-cta { width: 100%; padding: 15px; border-radius: 12px; border: 1.5px solid var(--border); font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; background: var(--surface2); color: var(--muted); transition: all 0.2s; letter-spacing: -0.3px; }
+    .modal-cta.ready { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 8px 24px rgba(124,107,250,0.35); }
+    .modal-cta.ready:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(124,107,250,0.45); }
+    .modal-footer { text-align: center; margin-top: 16px; font-size: 0.76rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero-title { letter-spacing: -2px; }
+      .features { grid-template-columns: 1fr; }
+      .feat-card.wide { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-orb glow-1"></div>
+  <div class="glow-orb glow-2"></div>
+
+  <nav>
+    <a href="#" class="logo"><div class="logo-dot"></div>ChatRoom</a>
+    <ul class="nav-links">
+      <li><a href="#">Features</a></li>
+      <li><a href="#">Safety</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="auth.html" class="nav-btn">Sign In</a>
+      <button class="nav-btn primary" onclick="openModal()">Start Chatting</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-eyebrow">
+      <div class="pulse-dot"></div>
+      <span id="online-text">Connecting...</span>
+    </div>
+    <h1 class="hero-title">Meet<br><span>Strangers</span><br>Instantly</h1>
+    <p class="hero-sub">Anonymous, secure, real-time chat with people worldwide. No accounts. No traces.</p>
+    <div class="mode-selector">
+      <button class="mode-opt active" id="text-mode" onclick="setMode('text')">Text Chat</button>
+      <button class="mode-opt" id="video-mode" onclick="setMode('video')">Video Chat</button>
+    </div>
+    <button class="cta-btn" onclick="openModal()">Start Chatting</button>
+  </section>
+
+  <section class="features">
+    <div class="feat-card wide">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+      <div class="feat-title">Instant Matching</div>
+      <div class="feat-desc">Our intelligent matching system connects you in milliseconds. Interest-based prioritization ensures meaningful conversations from the very first message.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></div>
+      <div class="feat-title">Zero Storage</div>
+      <div class="feat-desc">No messages stored, no logs. Everything disappears when you leave.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>
+      <div class="feat-title">HD Video Calls</div>
+      <div class="feat-desc">Peer-to-peer WebRTC video with no intermediary servers.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm-2 16l-4-4 1.4-1.4L10 14.2l6.6-6.6L18 9l-8 8z"/></svg></div>
+      <div class="feat-title">Full Control</div>
+      <div class="feat-desc">Block, report, and skip. You're always in charge.</div>
+    </div>
+  </section>
+
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">Quick <span>Setup</span></div>
+      <div class="modal-desc">Two selections and you're in.</div>
+      <label class="field-label">I am</label>
+      <div class="choice-grid">
+        <div class="choice-card" onclick="pick('gender','male',this)">Male</div>
+        <div class="choice-card" onclick="pick('gender','female',this)">Female</div>
+      </div>
+      <label class="field-label">Age group</label>
+      <div class="age-grid">
+        <div class="age-card" onclick="pick('age','<18',this)">Under 18</div>
+        <div class="age-card" onclick="pick('age','18-25',this)">18 – 25</div>
+        <div class="age-card" onclick="pick('age','25+',this)">25 +</div>
+      </div>
+      <button class="modal-cta" id="go-btn" onclick="startChat()">Select options above</button>
+      <p class="modal-footer">Anonymous · No registration · Encrypted</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    socket.on('online-count', count => {
+      document.getElementById('online-text').textContent = count.toLocaleString() + ' online now';
+    });
+
+    let selectedGender = null, selectedAge = null;
+
+    function setMode(m) {
+      document.getElementById('text-mode').classList.toggle('active', m === 'text');
+      document.getElementById('video-mode').classList.toggle('active', m === 'video');
+      sessionStorage.setItem('chatMode', m);
+    }
+
+    function openModal() { document.getElementById('modal-bg').classList.add('open'); }
+    function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+    document.getElementById('modal-bg').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-bg')) closeModal();
+    });
+
+    function pick(type, val, el) {
+      const siblings = el.parentElement.querySelectorAll('.choice-card, .age-card');
+      siblings.forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      if (type === 'gender') selectedGender = val;
+      else selectedAge = val;
+      checkReady();
+    }
+
+    function checkReady() {
+      const btn = document.getElementById('go-btn');
+      if (selectedGender && selectedAge) {
+        btn.textContent = 'Enter ChatRoom';
+        btn.classList.add('ready');
+      }
+    }
+
+    function startChat() {
+      if (!selectedGender || !selectedAge) return;
+      const user = {
+        nickname: 'User_' + Math.floor(Math.random() * 90000 + 10000),
+        gender: selectedGender,
+        pref: 'anyone',
+        age: selectedAge,
+        interests: []
+      };
+      sessionStorage.setItem('chatSetup', JSON.stringify(user));
+      window.location.href = 'chat.html';
+    }
+  </script>
+</body>
+</html>

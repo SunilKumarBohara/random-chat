@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChatRoom — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070709;
+      --surface: #0f0f14;
+      --surface2: #16161e;
+      --primary: #7c6bfa;
+      --primary-dim: rgba(124,107,250,0.12);
+      --text: #f0f0f5;
+      --muted: #6b6b80;
+      --border: rgba(255,255,255,0.06);
+      --green: #00e5a0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background-image: radial-gradient(circle at 30% 20%, rgba(124,107,250,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(124,107,250,0.05) 0%, transparent 50%);
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 40px;
+      animation: fadeUp 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 32px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text); }
+    .logo { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+    .logo span { color: var(--primary); }
+    .sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 32px; }
+    .tabs { display: flex; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 28px; }
+    .tab { flex: 1; padding: 10px; border-radius: 9px; cursor: pointer; text-align: center; font-size: 0.875rem; font-weight: 600; color: var(--muted); transition: all 0.2s; border: none; background: transparent; font-family: 'DM Sans', sans-serif; }
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+    .field-wrap { position: relative; }
+    input {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    input:focus { border-color: var(--primary); background: rgba(124,107,250,0.04); }
+    input::placeholder { color: var(--muted); }
+    .toggle-eye {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 0.85rem;
+      transition: color 0.2s;
+      user-select: none;
+    }
+    .toggle-eye:hover { color: var(--text); }
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      transition: all 0.2s;
+      box-shadow: 0 8px 24px rgba(124,107,250,0.3);
+      margin-top: 8px;
+      letter-spacing: -0.3px;
+    }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(124,107,250,0.4); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .switch-text { text-align: center; margin-top: 20px; font-size: 0.875rem; color: var(--muted); }
+    .switch-text a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .switch-text a:hover { text-decoration: underline; }
+    #signup-form { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="index.html" class="back-link">← Back to Home</a>
+    <div class="logo">Chat<span>Room</span></div>
+    <div class="sub" id="sub-text">Welcome back. Sign in to continue.</div>
+
+    <div class="tabs">
+      <button class="tab active" id="login-tab" onclick="showTab('login')">Sign In</button>
+      <button class="tab" id="signup-tab" onclick="showTab('signup')">Register</button>
+    </div>
+
+    <form id="login-form" onsubmit="event.preventDefault(); doAuth('login')">
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" required/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="field-wrap">
+          <input type="password" id="login-pass" placeholder="••••••••" required/>
+          <span class="toggle-eye" onclick="togglePass('login-pass')">Show</span>
+        </div>
+      </div>
+      <button class="submit-btn" id="login-btn" type="submit">Sign In</button>
+    </form>
+
+    <form id="signup-form" onsubmit="event.preventDefault(); doAuth('signup')">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" placeholder="Your name" required/>
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" required/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="field-wrap">
+          <input type="password" id="signup-pass" placeholder="••••••••" required/>
+          <span class="toggle-eye" onclick="togglePass('signup-pass')">Show</span>
+        </div>
+      </div>
+      <button class="submit-btn" id="signup-btn" type="submit">Create Account</button>
+    </form>
+
+    <div class="switch-text" id="switch-text">
+      New here? <a href="#" onclick="showTab('signup')">Create a free account</a>
+    </div>
+  </div>
+
+  <script>
+    function showTab(t) {
+      ['login','signup'].forEach(x => {
+        document.getElementById(x+'-tab').classList.toggle('active', x === t);
+        document.getElementById(x+'-form').style.display = x === t ? 'block' : 'none';
+      });
+      document.getElementById('sub-text').textContent = t === 'login'
+        ? 'Welcome back. Sign in to continue.'
+        : 'Join the community. It\'s free.';
+      document.getElementById('switch-text').innerHTML = t === 'login'
+        ? 'New here? <a href="#" onclick="showTab(\'signup\')">Create a free account</a>'
+        : 'Already registered? <a href="#" onclick="showTab(\'login\')">Sign in</a>';
+    }
+
+    function togglePass(id) {
+      const el = document.getElementById(id);
+      const eye = el.nextElementSibling;
+      const show = el.type === 'password';
+      el.type = show ? 'text' : 'password';
+      eye.textContent = show ? 'Hide' : 'Show';
+    }
+
+    function doAuth(type) {
+      const btn = document.getElementById(type + '-btn');
+      const email = document.getElementById(type === 'login' ? 'login-email' : 'signup-email').value;
+      const name = type === 'login' ? email.split('@')[0] : document.getElementById('signup-name').value;
+      const user = { name, email, loggedIn: true };
+      localStorage.setItem('rcUser', JSON.stringify(user));
+      btn.textContent = 'Authenticating...';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = 'Redirecting...';
+        setTimeout(() => window.location.href = 'index.html', 600);
+      }, 1200);
+    }
+  </script>
+</body>
+</html>
