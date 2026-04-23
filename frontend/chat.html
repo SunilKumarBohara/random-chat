@@ -681,6 +681,10 @@
       .input-area {
         padding: 8px 12px;
         gap: 8px;
+        position: sticky;
+        bottom: 0;
+        background: var(--surface);
+        z-index: 50;
       }
 
       .message-input {
@@ -698,28 +702,6 @@
       }
     }
 
-    /* Loading toast */
-    #loadingToast {
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      backdrop-filter: blur(10px);
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 14px;
-      font-size: 12px;
-      z-index: 500;
-      display: none;
-      max-width: min(520px, calc(100vw - 24px));
-      text-align: center;
-    }
-
-    #loadingToast.show {
-      display: block;
-    }
 
     .btn-disabled {
       opacity: 0.6;
@@ -729,7 +711,6 @@
 </head>
 
 <body>
-  <div id="loadingToast">Loading…</div>
   <div class="app-container">
     <!-- Chat Section -->
     <div class="chat-section">
@@ -1200,12 +1181,7 @@
       // Clear session storage
       sessionStorage.removeItem('currentPartner');
 
-      // Find new match after delay
-      setTimeout(() => {
-        if (!isConnected) {
-          startMatching();
-        }
-      }, 1500);
+      // User stays on screen to read messages until they click "Next"
     });
 
     socket.on('disconnected-next', () => {
