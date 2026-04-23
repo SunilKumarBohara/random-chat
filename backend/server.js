@@ -1,88 +1,426 @@
-// RandomChat Server - Updated 2026-04-20
+// backend/server.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const cors = require('cors');
+const session = require('express-session');
+const { v4: uuidv4 } = require('uuid');
+const compression = require('compression');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { maxHttpBufferSize: 10 * 1024 * 1024 });
 
+// Trust proxy for IP detection when hosted (e.g. Nginx, Heroku)
+app.set('trust proxy', 1);
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for simplicity, enable in production
+}));
+
+// Compression middleware
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
+
+// Session configuration for anonymous users
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+});
+
+app.use(sessionMiddleware);
+
+// CORS configuration for production
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.FRONTEND_URL || 'https://yourdomain.com']
+  : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST']
+}));
+
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Serve setup.html as default
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
+// Socket.io configuration
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  maxHttpBufferSize: 15 * 1024 * 1024,
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
 
-const waitingUsers = [];
-const activePairs = {};
+// Share session middleware with Socket.io
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
 
+// Data structures for matching
+const textWaitingUsers = []; // Only text chat users
+const activePairs = new Map();
+const blockedUsers = new Map();
+const userSessions = new Map(); // Store user session data
+let onlineCount = 0;
+
+// Constants
+const TOXIC_WORDS = [
+  'fuck', 'shit', 'asshole', 'bitch', 'damn', 'crap', 'dick', 'pussy',
+  'nigger', 'faggot', 'retard', 'whore', 'slut', 'cunt', 'bastard'
+];
+
+// Helper functions
+function filterProfanity(text) {
+  let filtered = text;
+  TOXIC_WORDS.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    filtered = filtered.replace(regex, '***');
+  });
+  return filtered;
+}
+
+function getPartner(socketId) {
+  return activePairs.get(socketId);
+}
+
+// Generate anonymous user ID
+function getAnonymousUserId(socket) {
+  const session = socket.request.session;
+  if (!session.anonymousId) {
+    session.anonymousId = uuidv4();
+    session.save();
+  }
+  return session.anonymousId;
+}
+
+// Match finding logic - separated by mode
 function findMatch(socket, data) {
-  const { nickname, gender, pref, age } = data;
-  
-  // Remove user if already in waiting list to avoid duplicates
-  const existingIdx = waitingUsers.findIndex(u => u.id === socket.id);
-  if (existingIdx !== -1) waitingUsers.splice(existingIdx, 1);
+  const { nickname, gender, pref, age, interests = [], mode = 'text', country = null } = data;
+  const anonymousId = getAnonymousUserId(socket);
 
-  let matchIndex = waitingUsers.findIndex(u => {
+  // Store user session data
+  userSessions.set(socket.id, {
+    anonymousId,
+    nickname,
+    gender,
+    pref,
+    age,
+    mode,
+    country,
+    timestamp: Date.now()
+  });
+
+  const textIndex = textWaitingUsers.findIndex(u => u.id === socket.id);
+  if (textIndex !== -1) textWaitingUsers.splice(textIndex, 1);
+
+  // Check if user is blocked
+  if (blockedUsers.has(anonymousId)) {
+    const blockedSet = blockedUsers.get(anonymousId);
+    if (blockedSet.has('global')) {
+      socket.emit('error', { message: 'You have been blocked from the platform' });
+      return;
+    }
+  }
+
+  // All users go to text queue
+  const waitingList = textWaitingUsers;
+
+  // Find matching partner with same mode
+  let matchIndex = waitingList.findIndex(u => {
     if (u.id === socket.id) return false;
+
+    const uAnonId = userSessions.get(u.id)?.anonymousId;
+    const socketAnonId = anonymousId;
+
+    if (blockedUsers.get(socketAnonId)?.has(uAnonId)) return false;
+    if (blockedUsers.get(uAnonId)?.has(socketAnonId)) return false;
+
     const iWant = pref === 'anyone' || pref === u.gender;
     const theyWant = u.pref === 'anyone' || u.pref === gender;
     return iWant && theyWant;
   });
 
-  // Fallback to anyone if no preference match (optional, but keeps the app active)
-  if (matchIndex === -1 && pref === 'anyone') {
-    matchIndex = waitingUsers.findIndex(u => u.id !== socket.id);
-  }
-
   if (matchIndex !== -1) {
-    const partner = waitingUsers.splice(matchIndex, 1)[0];
-    activePairs[socket.id] = partner.id;
-    activePairs[partner.id] = socket.id;
-    io.to(socket.id).emit('matched', { partnerNickname: partner.nickname, partnerGender: partner.gender, partnerAge: partner.age });
-    io.to(partner.id).emit('matched', { partnerNickname: nickname, partnerGender: gender, partnerAge: age });
+    const partner = waitingList.splice(matchIndex, 1)[0];
+    const partnerSession = userSessions.get(partner.id);
+
+    activePairs.set(socket.id, partner.id);
+    activePairs.set(partner.id, socket.id);
+
+    const commonInterests = interests.filter(i => partner.interests?.includes(i));
+
+    // Notify both users
+    io.to(socket.id).emit('matched', {
+      partnerId: partner.id,
+      partnerNickname: partner.nickname,
+      partnerGender: partner.gender,
+      partnerAge: partner.age,
+      partnerCountry: partner.country || null,
+      commonInterests: commonInterests,
+      mode: mode
+    });
+
+    io.to(partner.id).emit('matched', {
+      partnerId: socket.id,
+      partnerNickname: nickname,
+      partnerGender: gender,
+      partnerAge: age,
+      partnerCountry: country || null,
+      commonInterests: commonInterests,
+      mode: mode
+    });
+
+    console.log(`✅ Match: ${nickname} (${mode}) <-> ${partner.nickname} (${partner.mode})`);
   } else {
-    waitingUsers.push({ id: socket.id, nickname, gender, pref, age });
-    socket.emit('waiting');
+    waitingList.push({
+      id: socket.id,
+      nickname,
+      gender,
+      pref,
+      age,
+      interests: interests || [],
+      mode: 'text',
+      country: country,
+      timestamp: Date.now()
+    });
+    socket.emit('waiting', { mode: 'text', queueLength: waitingList.length });
+    console.log(`⏳ ${nickname} waiting (${waitingList.length} total in text queue)`);
   }
 }
 
-function getPartner(socket) { return activePairs[socket.id]; }
+// Routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
 
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/chat.html'));
+});
+
+
+app.get('/api/session', (req, res) => {
+  res.json({
+    anonymousId: req.session.anonymousId || null,
+    isNew: !req.session.anonymousId
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'online',
+    onlineUsers: onlineCount,
+    textWaiting: textWaitingUsers.length,
+    activePairs: activePairs.size / 2,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Cleanup stale waiting users
+setInterval(() => {
+  const now = Date.now();
+  const staleThreshold = 300000; // 5 minutes
+
+  [textWaitingUsers].forEach(list => {
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (now - list[i].timestamp > staleThreshold) {
+        const staleUser = list[i];
+        list.splice(i, 1);
+        io.to(staleUser.id).emit('error', { message: 'Match timeout, please try again' });
+        console.log(`🗑️ Removed stale user: ${staleUser.nickname}`);
+      }
+    }
+  });
+}, 60000);
+
+// Statistics logging
+setInterval(() => {
+  console.log(`📊 Stats - Online: ${onlineCount}, Text Waiting: ${textWaitingUsers.length}, Pairs: ${activePairs.size / 2}`);
+}, 300000);
+
+// Socket.io connection handling
 io.on('connection', (socket) => {
-  socket.on('find-match', data => findMatch(socket, data));
-  socket.on('message', ({ text }) => { const p = getPartner(socket); if(p) io.to(p).emit('message', { text }); });
-  socket.on('photo', ({ dataUrl }) => { const p = getPartner(socket); if(p) io.to(p).emit('photo', { dataUrl }); });
-  socket.on('voice', ({ dataUrl, duration }) => { const p = getPartner(socket); if(p) io.to(p).emit('voice', { dataUrl, duration }); });
-  socket.on('typing', () => { const p = getPartner(socket); if(p) io.to(p).emit('typing'); });
-  socket.on('typing-stop', () => { const p = getPartner(socket); if(p) io.to(p).emit('typing-stop'); });
+  onlineCount++;
+  io.emit('online-count', onlineCount);
 
-  // WebRTC signaling
-  socket.on('call-offer', ({ offer, withVideo }) => { const p = getPartner(socket); if(p) io.to(p).emit('call-offer', { offer, withVideo }); });
-  socket.on('call-answer', ({ answer }) => { const p = getPartner(socket); if(p) io.to(p).emit('call-answer', { answer }); });
-  socket.on('ice-candidate', ({ candidate }) => { const p = getPartner(socket); if(p) io.to(p).emit('ice-candidate', { candidate }); });
-  socket.on('call-reject', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-reject'); });
-  socket.on('call-end', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-end'); });
-  socket.on('call-upgrade', ({ withVideo }) => { const p = getPartner(socket); if(p) io.to(p).emit('call-upgrade', { withVideo }); });
-  socket.on('call-upgrade-accept', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-upgrade-accept'); });
-  socket.on('call-upgrade-reject', () => { const p = getPartner(socket); if(p) io.to(p).emit('call-upgrade-reject'); });
+  const anonymousId = getAnonymousUserId(socket);
+  console.log(`🔌 Connected: ${socket.id} (AnonID: ${anonymousId}, Online: ${onlineCount})`);
+
+  // Send session data to client
+  socket.emit('session', { anonymousId });
+
+  // App-level heartbeat (in addition to Socket.IO transport ping/pong)
+  socket.on('app-ping', ({ ts } = {}) => {
+    socket.emit('app-pong', { ts: ts || Date.now(), serverTs: Date.now() });
+  });
+
+  socket.on('find-match', (data) => {
+    findMatch(socket, data);
+  });
+
+  socket.on('cancel-match', () => {
+    const textIndex = textWaitingUsers.findIndex(u => u.id === socket.id);
+    if (textIndex !== -1) textWaitingUsers.splice(textIndex, 1);
+
+    socket.emit('match-cancelled');
+  });
+
+  socket.on('message', ({ id, text, reply } = {}, ack) => {
+    const partnerId = getPartner(socket.id);
+    if (!partnerId) {
+      if (typeof ack === 'function') ack({ ok: false, error: 'no_partner' });
+      return;
+    }
+    const filteredText = filterProfanity(text || '');
+    const timestamp = Date.now();
+
+    // Ack to sender that server accepted the message
+    if (typeof ack === 'function') ack({ ok: true, serverTs: timestamp });
+
+    // Deliver to partner (include sender socket id for delivery receipts)
+    io.to(partnerId).emit('message', {
+      id,
+      text: filteredText,
+      reply,
+      timestamp,
+      from: socket.id
+    });
+  });
+
+
+  // Delivery receipt from recipient -> notify original sender
+  socket.on('message-received', ({ id, from } = {}) => {
+    if (!id || !from) return;
+    io.to(from).emit('message-delivered', { id, timestamp: Date.now() });
+  });
+
+  socket.on('message-read', ({ id, from } = {}) => {
+    if (!id || !from) return;
+    io.to(from).emit('message-read', { id, timestamp: Date.now() });
+  });
+
+  socket.on('typing', () => {
+    const partnerId = getPartner(socket.id);
+    if (partnerId) io.to(partnerId).emit('typing');
+  });
+
+  socket.on('typing-stop', () => {
+    const partnerId = getPartner(socket.id);
+    if (partnerId) io.to(partnerId).emit('typing-stop');
+  });
+
+  socket.on('photo', ({ dataUrl }) => {
+    const partnerId = getPartner(socket.id);
+    if (partnerId) {
+      io.to(partnerId).emit('photo', { dataUrl, timestamp: Date.now() });
+    }
+  });
+
+
+
+  socket.on('report-partner', () => {
+    const partnerId = getPartner(socket.id);
+    if (partnerId) {
+      const partnerAnonId = userSessions.get(partnerId)?.anonymousId;
+      const myAnonId = anonymousId;
+
+      if (!blockedUsers.has(myAnonId)) blockedUsers.set(myAnonId, new Set());
+      blockedUsers.get(myAnonId).add(partnerAnonId);
+
+      io.to(partnerId).emit('partner-left', { reason: 'reported' });
+      activePairs.delete(partnerId);
+      activePairs.delete(socket.id);
+      socket.emit('disconnected-next');
+    }
+  });
+
+  socket.on('block-partner', () => {
+    const partnerId = getPartner(socket.id);
+    if (partnerId) {
+      const partnerAnonId = userSessions.get(partnerId)?.anonymousId;
+      const myAnonId = anonymousId;
+
+      if (!blockedUsers.has(myAnonId)) blockedUsers.set(myAnonId, new Set());
+      blockedUsers.get(myAnonId).add(partnerAnonId);
+
+      io.to(partnerId).emit('partner-left', { reason: 'blocked' });
+      activePairs.delete(partnerId);
+      activePairs.delete(socket.id);
+      socket.emit('disconnected-next');
+    }
+  });
 
   socket.on('next', () => {
-    const p = getPartner(socket);
-    if(p) { io.to(p).emit('partner-left'); delete activePairs[p]; }
-    delete activePairs[socket.id];
-    const idx = waitingUsers.findIndex(u => u.id === socket.id);
-    if(idx !== -1) waitingUsers.splice(idx, 1);
+    const partnerId = getPartner(socket.id);
+    if (partnerId) {
+      io.to(partnerId).emit('partner-left', { reason: 'next' });
+      activePairs.delete(partnerId);
+    }
+    activePairs.delete(socket.id);
     socket.emit('disconnected-next');
   });
 
   socket.on('disconnect', () => {
-    const idx = waitingUsers.findIndex(u => u.id === socket.id);
-    if(idx !== -1) waitingUsers.splice(idx, 1);
-    const p = getPartner(socket);
-    if(p) { io.to(p).emit('partner-left'); delete activePairs[p]; }
-    delete activePairs[socket.id];
+    onlineCount = Math.max(0, onlineCount - 1);
+    io.emit('online-count', onlineCount);
+
+    const textIndex = textWaitingUsers.findIndex(u => u.id === socket.id);
+    if (textIndex !== -1) textWaitingUsers.splice(textIndex, 1);
+
+    const partnerId = getPartner(socket.id);
+    if (partnerId) {
+      io.to(partnerId).emit('partner-left', { reason: 'disconnected' });
+      activePairs.delete(partnerId);
+    }
+    activePairs.delete(socket.id);
+    userSessions.delete(socket.id);
+
+    console.log(`🔌 Disconnected: ${socket.id} (Online: ${onlineCount})`);
   });
 });
 
-server.listen(3000, () => console.log('Server running at http://localhost:3000'));
+// Error handling
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection:', reason);
+});
+
+// For direct exposure (no Nginx)
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+  console.log(`
+  ═══════════════════════════════════════════════════════
+  🚀 RANDOM CHAT SERVER - RUNNING
+  ═══════════════════════════════════════════════════════
+  📡 URL: http://localhost:${PORT}
+  🌍 Environment: ${process.env.NODE_ENV || 'development'}
+  ⚠️  No Nginx - Direct Node.js exposure
+  ═══════════════════════════════════════════════════════
+  `);
+});

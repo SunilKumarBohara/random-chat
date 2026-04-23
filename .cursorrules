@@ -1,0 +1,22 @@
+# Stranger Talk Project - Cursor Rules
+
+## Core Principles
+- Never delete code without explicit confirmation
+- Always analyze before suggesting fixes
+- Test for regressions after each fix
+
+## Debugging Protocol
+1. Check browser console and network logs first
+2. Verify WebSocket connection state
+3. Check permission handling (microphone, camera)
+4. Test each feature independently
+
+## Bug Priority
+- Critical: Connection failures, call drops, message loss
+- High: Permission errors, audio/video sync
+- Medium: UI glitches, notification issues
+
+## Output Requirements
+- Explain bug cause before providing code
+- Show before/after code snippets
+- Include error handling
