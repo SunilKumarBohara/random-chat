@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Register - ChatRoom</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0a0a0a;
+      color: white;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .auth-card {
+      background: rgba(20, 20, 20, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 0.5s ease;
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .auth-tab {
+      padding: 10px 0;
+      cursor: pointer;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      position: relative;
+    }
+    .auth-tab.active {
+      color: #8b5cf6;
+    }
+    .auth-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #8b5cf6;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .input-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .input-box input {
+      background: none;
+      border: none;
+      color: white;
+      width: 100%;
+      outline: none;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      background: #8b5cf6;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    .auth-btn:hover {
+      background: #7c3aed;
+      transform: translateY(-2px);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .error-msg {
+      color: #ef4444;
+      font-size: 13px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="setTab('login')">Login</div>
+      <div class="auth-tab" id="tab-register" onclick="setTab('register')">Register</div>
+    </div>
+
+    <form id="authForm">
+      <div class="form-group">
+        <label>Phone Number</label>
+        <div class="input-box">
+          <i class="fas fa-phone"></i>
+          <input type="text" id="phone" placeholder="Enter number..." required>
+        </div>
+      </div>
+
+      <div class="form-group" id="nick-group" style="display: none;">
+        <label>Nickname</label>
+        <div class="input-box">
+          <i class="fas fa-user"></i>
+          <input type="text" id="nickname" placeholder="Enter nickname...">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-box">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <div id="errorMsg" class="error-msg"></div>
+
+      <button type="submit" class="auth-btn" id="submitBtn">Login</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.4);">
+      <a href="/" style="color: #8b5cf6; text-decoration: none;">Back to Home</a>
+    </p>
+  </div>
+
+  <script>
+    let mode = 'login';
+
+    function setTab(m) {
+      mode = m;
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + m).classList.add('active');
+      document.getElementById('nick-group').style.display = m === 'register' ? 'block' : 'none';
+      document.getElementById('submitBtn').textContent = m === 'login' ? 'Login' : 'Create Account';
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById('errorMsg');
+      errorEl.style.display = 'none';
+
+      const data = {
+        phoneNumber: document.getElementById('phone').value,
+        password: document.getElementById('password').value,
+      };
+
+      if (mode === 'register') {
+        data.nickname = document.getElementById('nickname').value || 'Stranger';
+      }
+
+      try {
+        const res = await fetch(`/api/auth/${mode}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          window.location.href = '/';
+        } else {
+          errorEl.textContent = result.error || 'Something went wrong';
+          errorEl.style.display = 'block';
+        }
+      } catch (e) {
+        errorEl.textContent = 'Server error. Try again later.';
+        errorEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

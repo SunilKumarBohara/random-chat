@@ -1,4 +1,3 @@
-// backend/server.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -9,6 +8,9 @@ const { v4: uuidv4 } = require('uuid');
 const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
+const { sequelize, User, Group, GroupMember, Message: MsgModel } = require('./models');
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
 require('dotenv').config();
 
 const app = express();
@@ -32,17 +34,20 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Session configuration for anonymous users
+// Session configuration with database persistence
+const sessionStore = new SequelizeStore({ db: sequelize });
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
+  store: sessionStore,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false, // Changed to false for better auth handling
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   }
 });
+sessionStore.sync();
 
 app.use(sessionMiddleware);
 
@@ -210,6 +215,113 @@ function findMatch(socket, data) {
   }
 }
 
+// Authentication Middleware
+const isAuthenticated = (req, res, next) => {
+  if (req.session.userId) return next();
+  res.status(401).json({ error: 'Unauthorized' });
+};
+
+// --- AUTH ROUTES ---
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { phoneNumber, password, nickname, gender, age, country } = req.body;
+    const existing = await User.findOne({ where: { phoneNumber } });
+    if (existing) return res.status(400).json({ error: 'Phone number already registered' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      phoneNumber,
+      password: hashedPassword,
+      nickname,
+      gender,
+      age,
+      country
+    });
+
+    req.session.userId = user.id;
+    res.json({ success: true, user: { id: user.id, nickname: user.nickname } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { phoneNumber, password } = req.body;
+    const user = await User.findOne({ where: { phoneNumber } });
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ error: 'Invalid credentials' });
+
+    req.session.userId = user.id;
+    res.json({ success: true, user: { id: user.id, nickname: user.nickname } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  if (!req.session.userId) return res.json({ user: null });
+  const user = await User.findByPk(req.session.userId, { attributes: { exclude: ['password'] } });
+  res.json({ user });
+});
+
+app.post('/api/profile/update', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.session.userId);
+    await user.update(req.body);
+    res.json({ success: true, user });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- GROUP ROUTES ---
+app.post('/api/groups/create', isAuthenticated, async (req, res) => {
+  try {
+    const { name } = req.body;
+    const inviteCode = uuidv4().split('-')[0].toUpperCase();
+    const group = await Group.create({ name, inviteCode, creatorId: req.session.userId });
+    await GroupMember.create({ groupId: group.id, userId: req.session.userId });
+    res.json({ success: true, group });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/groups/join', isAuthenticated, async (req, res) => {
+  try {
+    const { inviteCode } = req.body;
+    const group = await Group.findOne({ where: { inviteCode } });
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    const existing = await GroupMember.findOne({ where: { groupId: group.id, userId: req.session.userId } });
+    if (existing) return res.json({ success: true, group, alreadyMember: true });
+
+    await GroupMember.create({ groupId: group.id, userId: req.session.userId });
+    res.json({ success: true, group });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/groups/my', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.session.userId, {
+      include: [{ model: Group, as: 'groups' }]
+    });
+    res.json({ groups: user.groups });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
@@ -217,6 +329,10 @@ app.get('/', (req, res) => {
 
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/chat.html'));
+});
+
+app.get('/auth', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/auth.html'));
 });
 
 
@@ -334,6 +450,57 @@ io.on('connection', (socket) => {
     const partnerId = getPartner(socket.id);
     if (partnerId) {
       io.to(partnerId).emit('photo', { dataUrl, timestamp: Date.now() });
+    }
+  });
+
+  // --- GROUP SOCKET EVENTS ---
+  socket.on('join-group', async ({ groupId }) => {
+    try {
+      if (!socket.request.session.userId) return;
+      const member = await GroupMember.findOne({ where: { groupId, userId: socket.request.session.userId } });
+      if (member) {
+        socket.join(`group_${groupId}`);
+        const lastMessages = await MsgModel.findAll({
+          where: { groupId },
+          limit: 50,
+          order: [['createdAt', 'ASC']]
+        });
+        socket.emit('group-history', { groupId, messages: lastMessages });
+      }
+    } catch (e) {
+      console.error('Join group error:', e);
+    }
+  });
+
+  socket.on('group-message', async ({ groupId, text, type = 'text', dataUrl }) => {
+    try {
+      if (!socket.request.session.userId) return;
+      const member = await GroupMember.findOne({ where: { groupId, userId: socket.request.session.userId } });
+      if (!member) return;
+
+      const user = await User.findByPk(socket.request.session.userId);
+      const filteredText = filterProfanity(text || '');
+
+      const msg = await MsgModel.create({
+        senderId: user.id,
+        senderNickname: user.nickname,
+        text: filteredText,
+        type,
+        groupId
+      });
+
+      io.to(`group_${groupId}`).emit('group-message', {
+        id: msg.id,
+        groupId,
+        senderId: user.id,
+        senderNickname: user.nickname,
+        text: filteredText,
+        type: msg.type,
+        dataUrl: dataUrl,
+        timestamp: msg.createdAt
+      });
+    } catch (e) {
+      console.error('Group message error:', e);
     }
   });
 

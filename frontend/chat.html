@@ -824,6 +824,33 @@
     let premiumEndTime = null;
     let anonymousId = setup.anonymousId || null;
 
+    let activeGroupId = null;
+    let activeGroupName = null;
+    let currentUser = null;
+
+    // Load authenticated user profile
+    async function loadUser() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        currentUser = data.user;
+        if (currentUser) {
+          setup.nickname = currentUser.nickname;
+          setup.gender = currentUser.gender;
+          setup.age = currentUser.age;
+          setup.country = currentUser.country;
+        }
+      } catch (e) {}
+    }
+    loadUser().then(() => {
+      // Check if entering via group redirect
+      const pendingGroup = JSON.parse(sessionStorage.getItem('pendingGroup'));
+      if (pendingGroup) {
+        sessionStorage.removeItem('pendingGroup');
+        setTimeout(() => window.onGroupSwitch(pendingGroup.id, pendingGroup.name), 1000);
+      }
+    });
+
 
     // Connection state + outgoing queue
 
@@ -1099,6 +1126,55 @@
 
     socket.on('session', (data) => {
       anonymousId = data.anonymousId;
+    });
+
+    // --- GROUP SOCKET HANDLERS ---
+    window.onGroupSwitch = (groupId, groupName) => {
+      activeGroupId = groupId;
+      activeGroupName = groupName;
+      isConnected = false;
+      partnerId = null;
+      
+      document.getElementById('partnerName').textContent = `Group: ${groupName}`;
+      document.getElementById('partnerDetails').style.display = 'none';
+      document.getElementById('messagesArea').innerHTML = '';
+      addSystemMessage(`✨ Welcome to ${groupName} ✨`);
+      
+      document.getElementById('matchingOverlay').classList.remove('show');
+      socket.emit('join-group', { groupId });
+    };
+
+    socket.on('group-message', (data) => {
+      if (data.groupId == activeGroupId) {
+        const isMine = data.senderId === currentUser?.id;
+        if (data.type === 'image') {
+          addImageMessage(data.dataUrl, isMine ? 'me' : 'them', { nickname: data.senderNickname });
+        } else {
+          addMessage(data.text, isMine ? 'me' : 'them', { 
+            id: data.id, 
+            nickname: data.senderNickname 
+          });
+        }
+      }
+    });
+
+    socket.on('group-history', ({ groupId, messages }) => {
+      if (groupId == activeGroupId) {
+        messages.forEach(m => {
+          const isMine = m.senderId === currentUser?.id;
+          if (m.type === 'image') {
+            addImageMessage(m.text, isMine ? 'me' : 'them', { nickname: m.senderNickname });
+          } else {
+            addMessage(m.text, isMine ? 'me' : 'them', { 
+              id: m.id, 
+              nickname: m.senderNickname,
+              timestamp: m.createdAt 
+            });
+          }
+        });
+      }
+    });
+      anonymousId = data.anonymousId;
       localStorage.setItem('anonymousId', anonymousId); // Save for theme.js menu
       console.log('Session established:', anonymousId);
     });
@@ -1311,7 +1387,15 @@
     function sendMessage() {
       const input = document.getElementById('messageInput');
       const text = input.value.trim();
-      if (!text || !isConnected) return;
+      if (!text) return;
+      if (!isConnected && !activeGroupId) return;
+
+      if (activeGroupId) {
+        socket.emit('group-message', { groupId: activeGroupId, text });
+        addMessage(text, 'me', { nickname: currentUser?.nickname || 'Me' });
+        input.value = '';
+        return;
+      }
 
       const id = newMessageId();
       const replyData = replyingTo ? { ...replyingTo } : null;
@@ -1351,7 +1435,8 @@
 
     function sendPhoto(input) {
       const file = input.files[0];
-      if (!file || !isConnected) return;
+      if (!file) return;
+      if (!isConnected && !activeGroupId) return;
 
       if (file.size > 15 * 1024 * 1024) {
         addSystemMessage('❌ Image too large (max 15MB)');
@@ -1361,9 +1446,15 @@
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        safeEmit('photo', { dataUrl: e.target.result });
-        addImageMessage(e.target.result, 'me');
-        saveMessageToHistory({ type: 'image', content: e.target.result, sender: 'me', timestamp: Date.now() });
+        const dataUrl = e.target.result;
+        if (activeGroupId) {
+          socket.emit('group-message', { groupId: activeGroupId, type: 'image', dataUrl });
+          addImageMessage(dataUrl, 'me');
+        } else {
+          safeEmit('photo', { dataUrl });
+          addImageMessage(dataUrl, 'me');
+          saveMessageToHistory({ type: 'image', content: dataUrl, sender: 'me', timestamp: Date.now() });
+        }
       };
       reader.readAsDataURL(file);
       input.value = '';

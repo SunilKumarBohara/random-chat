@@ -546,6 +546,10 @@
               <i class="fas fa-arrow-right"></i>
             </button>
           </div>
+          
+          <div style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted);">
+            <span id="authPrompt">Want to save your profile? <a href="/auth" style="color: var(--accent-solid); text-decoration: none; font-weight: 700;">Login / Create Account</a></span>
+          </div>
       </form>
     </div>
   </div>
@@ -559,6 +563,22 @@
     let selectedMode = 'text';
     let userCountry = { code: '🌍', name: 'Unknown' };
     let anonymousId = null;
+    let currentUser = null;
+
+    async function loadAuthUser() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        currentUser = data.user;
+        if (currentUser) {
+          document.getElementById('nickname').value = currentUser.nickname;
+          setGender(currentUser.gender);
+          setAge(currentUser.age);
+          document.getElementById('authPrompt').innerHTML = `Logged in as <b>${currentUser.nickname}</b>`;
+        }
+      } catch (e) {}
+    }
+    loadAuthUser();
 
     // Socket event handlers
     socket.on('connect', () => {

@@ -78,6 +78,17 @@
     window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: themeName } }));
   }
 
+  // Auth State Management
+  let currentUser = null;
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      currentUser = data.user;
+      return currentUser;
+    } catch (e) { return null; }
+  }
+
   // Create theme toggle button (now Main Menu)
   function createThemeToggle() {
     let container = document.querySelector('.theme-toggle-container');
@@ -226,24 +237,41 @@
       return item;
     };
 
-    const label = document.createElement('div');
-    label.className = 'menu-label';
-    label.textContent = 'Main Menu';
-    menu.appendChild(label);
+    // --- DYNAMIC AUTH SECTION ---
+    checkAuth().then(user => {
+      menu.innerHTML = ''; // Clear and rebuild based on auth
+      
+      const label = document.createElement('div');
+      label.className = 'menu-label';
+      label.textContent = user ? `Hi, ${user.nickname}` : 'Main Menu';
+      menu.appendChild(label);
 
-    // 1. Settings
-    menu.appendChild(createMenuItem('fa-cog', 'Settings', () => {
-      alert('Settings panel coming soon!');
-    }));
+      if (user) {
+        // Logged In Options
+        menu.appendChild(createMenuItem('fa-user-circle', 'My Profile', () => openProfileModal()));
+        menu.appendChild(createMenuItem('fa-users', 'Manage Groups', () => openGroupsModal()));
+        menu.appendChild(createMenuItem('fa-sign-out-alt', 'Logout', () => logout()));
+      } else {
+        // Logged Out Options
+        menu.appendChild(createMenuItem('fa-sign-in-alt', 'Login / Register', () => {
+          window.location.href = '/auth';
+        }));
+      }
 
-    // 2. Session ID
-    const anonId = localStorage.getItem('anonymousId') || 'Not Set';
-    const shortId = anonId.substring(0, 8) + '...';
-    
-    menu.appendChild(createMenuItem('fa-id-badge', 'Session ID', () => {
-      navigator.clipboard.writeText(anonId);
-      alert('Session ID copied to clipboard!');
-    }, shortId));
+      menu.appendChild(document.createElement('div')).className = 'menu-divider';
+
+      // Themes
+      const themeLabel = document.createElement('div');
+      themeLabel.className = 'menu-label';
+      themeLabel.textContent = 'Themes';
+      menu.appendChild(themeLabel);
+
+      Object.entries(themes).forEach(([id, t]) => {
+        const item = createMenuItem(t.icon, t.name, () => applyTheme(id), id === currentTheme ? 'Active' : '');
+        if (id === currentTheme) item.style.borderLeft = '2px solid var(--accent-solid)';
+        menu.appendChild(item);
+      });
+    });
 
     // 3. Location Filter
     const countryStr = localStorage.getItem('user_country');
@@ -309,6 +337,138 @@
       }
     });
   }
+
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.reload();
+  }
+
+  function createModal(title, content) {
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal-overlay';
+    modal.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+      z-index: 10001; display: flex; align-items: center; justify-content: center;
+      animation: fadeIn 0.3s ease;
+    `;
+    
+    modal.innerHTML = `
+      <div class="custom-modal-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 90%; max-width: 400px; position: relative;">
+        <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px; color: var(--text);">${title}</div>
+        <div class="modal-body">${content}</div>
+        <button class="modal-close" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--muted); cursor: pointer;"><i class="fas fa-times"></i></button>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').onclick = () => modal.remove();
+    return modal;
+  }
+
+  window.openProfileModal = async () => {
+    const user = await checkAuth();
+    if (!user) return;
+    
+    const content = `
+      <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="form-group">
+          <label style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Nickname</label>
+          <input type="text" id="p-nickname" value="${user.nickname}" style="width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+        </div>
+        <div class="form-group">
+          <label style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Phone (Not changeable)</label>
+          <div style="padding: 10px; background: var(--surface2); border-radius: 10px; color: var(--muted); font-size: 14px;">${user.phoneNumber}</div>
+        </div>
+        <button id="save-profile" style="background: var(--accent-solid); color: white; border: none; border-radius: 10px; padding: 12px; font-weight: 700; cursor: pointer; margin-top: 10px;">Save Changes</button>
+      </div>
+    `;
+    
+    const modal = createModal('User Profile', content);
+    modal.querySelector('#save-profile').onclick = async () => {
+      const nickname = modal.querySelector('#p-nickname').value;
+      const res = await fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname })
+      });
+      if (res.ok) {
+        alert('Profile updated!');
+        modal.remove();
+        window.location.reload();
+      }
+    };
+  };
+
+  window.openGroupsModal = async () => {
+    const res = await fetch('/api/groups/my');
+    const { groups } = await res.json();
+    
+    const groupsList = groups.map(g => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface2); border-radius: 12px; margin-bottom: 8px;">
+        <div>
+          <div style="font-weight: 700; color: var(--text);">${g.name}</div>
+          <div style="font-size: 10px; color: var(--muted);">Code: ${g.inviteCode}</div>
+        </div>
+        <button onclick="window.joinGroupChat('${g.id}', '${g.name}')" style="background: var(--accent-solid); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">Enter</button>
+      </div>
+    `).join('') || '<div style="color: var(--muted); text-align: center; padding: 20px;">No groups yet</div>';
+    
+    const content = `
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div style="max-height: 200px; overflow-y: auto;">${groupsList}</div>
+        <div style="height: 1px; background: var(--border);"></div>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="g-name" placeholder="Group Name" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+          <button id="create-group" style="background: #10b981; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Create</button>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="g-code" placeholder="Invite Code" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+          <button id="join-group" style="background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Join</button>
+        </div>
+      </div>
+    `;
+    
+    const modal = createModal('Group Chats', content);
+    
+    modal.querySelector('#create-group').onclick = async () => {
+      const name = modal.querySelector('#g-name').value;
+      if (!name) return;
+      const res = await fetch('/api/groups/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      if (res.ok) window.location.reload();
+    };
+    
+    modal.querySelector('#join-group').onclick = async () => {
+      const inviteCode = modal.querySelector('#g-code').value;
+      if (!inviteCode) return;
+      const res = await fetch('/api/groups/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteCode })
+      });
+      if (res.ok) window.location.reload();
+    };
+  };
+
+  // Global window function for entering group chat
+  window.joinGroupChat = (groupId, groupName) => {
+    // Hide modal
+    const modal = document.querySelector('.custom-modal-overlay');
+    if (modal) modal.remove();
+    
+    // Trigger socket join in chat.html context
+    if (window.onGroupSwitch) {
+      window.onGroupSwitch(groupId, groupName);
+    } else {
+      // If on index page, redirect to chat with group param
+      sessionStorage.setItem('pendingGroup', JSON.stringify({ id: groupId, name: groupName }));
+      window.location.href = '/chat';
+    }
+  };
 
   // Initialize theme system
   function initTheme() {
