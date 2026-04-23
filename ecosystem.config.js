@@ -2,11 +2,11 @@ module.exports = {
     apps: [{
         name: 'random-chat',
         script: 'backend/server.js',
-        instances: 'max',
-        exec_mode: 'cluster',
+        instances: 1,
+        exec_mode: 'fork',
         env: {
             NODE_ENV: 'production',
-            PORT: 3000,
+            PORT: 3001,
             HOST: '0.0.0.0'
         },
         error_file: './logs/err.log',

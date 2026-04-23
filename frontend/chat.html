@@ -991,7 +991,6 @@
       return 'm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
     }
 
-
     function setMessageStatus(id, status) {
       const rec = pendingMessages.get(id);
       if (rec) rec.status = status;
@@ -1098,9 +1097,6 @@
     // Socket event listeners
     socket.on('connect', () => {
       console.log('Connected to server');
-      // #region agent log
-      fetch('http://127.0.0.1:7492/ingest/24e09bd6-3c32-4e5f-9e1e-7c76fd711487',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'035750'},body:JSON.stringify({sessionId:'035750',runId:'chat-run',hypothesisId:'H3',location:'frontend/chat.html:1839',message:'Chat socket connected',data:{socketConnected:socket.connected,reconnectAttempt},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       reconnectAttempt = 0;
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
@@ -1125,9 +1121,6 @@
 
     socket.on('connect_error', (err) => {
       console.warn('Socket connect_error:', err?.message || err);
-      // #region agent log
-      fetch('http://127.0.0.1:7492/ingest/24e09bd6-3c32-4e5f-9e1e-7c76fd711487',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'035750'},body:JSON.stringify({sessionId:'035750',runId:'chat-run',hypothesisId:'H3',location:'frontend/chat.html:1863',message:'Socket connect_error',data:{error:err?.message||String(err),state:connectionState},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setConnectionState('disconnected');
       stopHeartbeat();
       scheduleReconnect();
@@ -1277,6 +1270,11 @@
       saveMessageToHistory({ type: 'image', content: data.dataUrl, sender: 'them', timestamp: data.timestamp });
     });
 
+    socket.on('photo', (data) => {
+      addImageMessage(data.dataUrl, 'them');
+      saveMessageToHistory({ type: 'image', content: data.dataUrl, sender: 'them', timestamp: data.timestamp });
+    });
+
 
 
     // Message history management
@@ -1397,6 +1395,26 @@
       if (socket.connected) socket.emit('typing-stop');
     }
 
+    function sendPhoto(input) {
+      const file = input.files[0];
+      if (!file || !isConnected) return;
+
+      if (file.size > 15 * 1024 * 1024) {
+        addSystemMessage('❌ Image too large (max 15MB)');
+        input.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        safeEmit('photo', { dataUrl: e.target.result });
+        addImageMessage(e.target.result, 'me');
+        saveMessageToHistory({ type: 'image', content: e.target.result, sender: 'me', timestamp: Date.now() });
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+
     function handleKeyPress(event) {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -1421,26 +1439,6 @@
       typingStopTimer = setTimeout(() => {
         if (socket.connected) socket.emit('typing-stop');
       }, 2000);
-    }
-
-    function sendPhoto(input) {
-      const file = input.files[0];
-      if (!file || !isConnected) return;
-
-      if (file.size > 15 * 1024 * 1024) {
-        addSystemMessage('❌ Image too large (max 15MB)');
-        input.value = '';
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        safeEmit('photo', { dataUrl: e.target.result });
-        addImageMessage(e.target.result, 'me');
-        saveMessageToHistory({ type: 'image', content: e.target.result, sender: 'me', timestamp: Date.now() });
-      };
-      reader.readAsDataURL(file);
-      input.value = '';
     }
 
 
@@ -1575,26 +1573,33 @@
     }
 
 
+    function addSystemMessage(text) {
+      const messagesArea = document.getElementById('messagesArea');
+      const div = document.createElement('div');
+      div.className = 'message system';
+      div.innerHTML = text;
+      messagesArea.appendChild(div);
+      while (messagesArea.children.length > 120) {
+        messagesArea.removeChild(messagesArea.firstChild);
+      }
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
     function addImageMessage(dataUrl, type) {
       const messagesArea = document.getElementById('messagesArea');
       const div = document.createElement('div');
       div.className = `message ${type}`;
       const img = document.createElement('img');
       img.src = dataUrl;
+      img.className = 'message-image';
       img.style.maxWidth = '100%';
-      img.style.borderRadius = '12px';
-      img.style.marginTop = '4px';
+      img.style.borderRadius = '10px';
+      img.style.marginTop = '5px';
       img.onclick = () => window.open(dataUrl, '_blank');
+      img.onerror = () => {
+        div.innerHTML = '📷 [Image failed to load]';
+      };
       div.appendChild(img);
-      messagesArea.appendChild(div);
-      messagesArea.scrollTop = messagesArea.scrollHeight;
-    }
-
-    function addSystemMessage(text) {
-      const messagesArea = document.getElementById('messagesArea');
-      const div = document.createElement('div');
-      div.className = 'message system';
-      div.innerHTML = text;
       messagesArea.appendChild(div);
       while (messagesArea.children.length > 120) {
         messagesArea.removeChild(messagesArea.firstChild);
@@ -1633,7 +1638,8 @@
       const dbMsgs = await loadMessagesFromIndexedDb();
       if (!messageHistory.length && dbMsgs.length) {
         dbMsgs.slice(-100).forEach((msg) => {
-          if (msg.type === 'text') addMessage(msg.content || msg.text || '', msg.sender || 'them');
+          if (msg.type === 'text') addMessage(msg.content || msg.text || '', msg.sender || 'them', { id: msg.id, reply: msg.reply });
+          if (msg.type === 'image') addImageMessage(msg.content, msg.sender || 'them');
         });
       }
       setConnectionState('connecting');

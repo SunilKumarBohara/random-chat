@@ -549,9 +549,6 @@
     // Socket event handlers
     socket.on('connect', () => {
       console.log('Connected to server');
-      // #region agent log
-      fetch('http://127.0.0.1:7492/ingest/24e09bd6-3c32-4e5f-9e1e-7c76fd711487',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'035750'},body:JSON.stringify({sessionId:'035750',runId:'homepage-run',hypothesisId:'H1',location:'frontend/index.html:538',message:'Homepage socket connected',data:{connected:socket.connected},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     });
 
     socket.on('session', (data) => {
@@ -637,9 +634,6 @@
 
     document.getElementById('setupForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      // #region agent log
-      fetch('http://127.0.0.1:7492/ingest/24e09bd6-3c32-4e5f-9e1e-7c76fd711487',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'035750'},body:JSON.stringify({sessionId:'035750',runId:'homepage-run',hypothesisId:'H2',location:'frontend/index.html:632',message:'Setup form submit',data:{nicknameLen:(document.getElementById('nickname').value||'').trim().length,selectedMode:selectedMode,selectedGender:selectedGender},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       const btn = document.querySelector('.start-btn');
       if (btn) {
         btn.disabled = true;
@@ -671,9 +665,6 @@
       };
 
       sessionStorage.setItem('chatSetup', JSON.stringify(setup));
-      // #region agent log
-      fetch('http://127.0.0.1:7492/ingest/24e09bd6-3c32-4e5f-9e1e-7c76fd711487',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'035750'},body:JSON.stringify({sessionId:'035750',runId:'homepage-run',hypothesisId:'H2',location:'frontend/index.html:663',message:'Redirecting to chat',data:{hasAnonymousId:!!anonymousId,mode:setup.mode},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       window.location.href = '/chat';
     });
 
