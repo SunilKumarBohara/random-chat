@@ -562,7 +562,7 @@
     let selectedAge = '18-25';
     let selectedMode = 'text';
     let userCountry = { code: '🌍', name: 'Unknown' };
-    let anonymousId = null;
+    let persistentId = null;
     let currentUser = null;
 
     async function loadAuthUser() {
@@ -695,7 +695,7 @@
         age: selectedAge,
         mode: 'text',
         country: userCountry,
-        anonymousId: anonymousId
+        persistentId: persistentId
       };
 
       sessionStorage.setItem('chatSetup', JSON.stringify(setup));

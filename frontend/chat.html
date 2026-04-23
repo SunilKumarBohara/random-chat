@@ -803,13 +803,11 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="theme.js"></script>
   <script>
-    // Get setup data from session storage
-    const setup = JSON.parse(sessionStorage.getItem('chatSetup') || '{}');
-    if (!setup.nickname) {
-      window.location.href = '/';
-    }
+    let setup = JSON.parse(sessionStorage.getItem('chatSetup') || '{}');
+    let persistentId = setup.persistentId || null;
+    let currentUser = null;
 
-    // Socket connection (manual reconnect/backoff)
+    // Socket connection
     const socket = io({
       autoConnect: false,
       reconnection: false
@@ -822,7 +820,6 @@
     let premiumFilter = null;
     let premiumTimer = null;
     let premiumEndTime = null;
-    let anonymousId = setup.anonymousId || null;
 
     let activeGroupId = null;
     let activeGroupName = null;
@@ -834,13 +831,26 @@
         const res = await fetch('/api/auth/me');
         const data = await res.json();
         currentUser = data.user;
+        if (data.persistentId) persistentId = data.persistentId;
+        
         if (currentUser) {
           setup.nickname = currentUser.nickname;
           setup.gender = currentUser.gender;
           setup.age = currentUser.age;
           setup.country = currentUser.country;
         }
-      } catch (e) {}
+
+        // Only redirect IF we are not logged in AND don't have setup data
+        if (!currentUser && !setup.nickname) {
+          window.location.href = '/';
+          return;
+        }
+
+        // Start socket after loading user
+        socket.connect();
+      } catch (e) {
+        if (!setup.nickname) window.location.href = '/';
+      }
     }
     loadUser().then(() => {
       // Check if entering via group redirect
@@ -1753,7 +1763,7 @@
       addSystemMessage('You’re offline. We’ll reconnect when you’re back.');
     });
 
-    console.log('Chat initialized - Mode:', setup.mode, 'Anonymous ID:', anonymousId);
+    console.log('Chat initialized - Mode:', setup.mode, 'ID:', persistentId);
   </script>
 </body>
 

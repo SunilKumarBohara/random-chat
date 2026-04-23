@@ -143,8 +143,8 @@ function findMatch(socket, data) {
   if (textIndex !== -1) textWaitingUsers.splice(textIndex, 1);
 
   // Check if user is blocked
-  if (blockedUsers.has(anonymousId)) {
-    const blockedSet = blockedUsers.get(anonymousId);
+  if (blockedUsers.has(persistentId)) {
+    const blockedSet = blockedUsers.get(persistentId);
     if (blockedSet.has('global')) {
       socket.emit('error', { message: 'You have been blocked from the platform' });
       return;
@@ -269,9 +269,10 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/api/auth/me', async (req, res) => {
-  if (!req.session.userId) return res.json({ user: null });
+  const persistentId = req.session.userId ? `u_${req.session.userId}` : (req.session.anonymousId || null);
+  if (!req.session.userId) return res.json({ user: null, persistentId });
   const user = await User.findByPk(req.session.userId, { attributes: { exclude: ['password'] } });
-  res.json({ user });
+  res.json({ user, persistentId });
 });
 
 app.post('/api/profile/update', isAuthenticated, async (req, res) => {
@@ -368,9 +369,10 @@ app.get('/auth', (req, res) => {
 
 
 app.get('/api/session', (req, res) => {
+  const persistentId = req.session.userId ? `u_${req.session.userId}` : (req.session.anonymousId || null);
   res.json({
-    anonymousId: req.session.anonymousId || null,
-    isNew: !req.session.anonymousId
+    persistentId,
+    isNew: !persistentId
   });
 });
 
