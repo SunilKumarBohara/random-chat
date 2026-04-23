@@ -1,6 +1,9 @@
 {
   "name": "random-chat",
   "version": "2.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "description": "Professional random chat application with video/voice calls",
   "main": "backend/server.js",
   "scripts": {
