@@ -580,14 +580,19 @@ process.on('unhandledRejection', (reason, promise) => {
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-server.listen(PORT, HOST, () => {
-  console.log(`
-  ═══════════════════════════════════════════════════════
-  🚀 RANDOM CHAT SERVER - RUNNING
-  ═══════════════════════════════════════════════════════
-  📡 URL: http://localhost:${PORT}
-  🌍 Environment: ${process.env.NODE_ENV || 'development'}
-  ⚠️  No Nginx - Direct Node.js exposure
-  ═══════════════════════════════════════════════════════
-  `);
+// Sync database and start server
+sequelize.sync().then(() => {
+  server.listen(PORT, HOST, () => {
+    console.log(`
+    ═══════════════════════════════════════════════════════
+    🚀 RANDOM CHAT SERVER - RUNNING
+    ═══════════════════════════════════════════════════════
+    📡 URL: http://localhost:${PORT}
+    🌍 Environment: ${process.env.NODE_ENV || 'development'}
+    📊 DB: SQLite Synchronized
+    ═══════════════════════════════════════════════════════
+    `);
+  });
+}).catch(err => {
+  console.error('❌ Database Sync Error:', err);
 });
