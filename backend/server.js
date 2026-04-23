@@ -322,6 +322,17 @@ app.get('/api/groups/my', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/api/groups/public', async (req, res) => {
+  try {
+    const groups = await Group.findAll({
+      attributes: ['id', 'name', 'createdAt'] // Don't send inviteCode here for security
+    });
+    res.json({ groups });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));

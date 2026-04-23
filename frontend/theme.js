@@ -401,30 +401,58 @@
   };
 
   window.openGroupsModal = async () => {
-    const res = await fetch('/api/groups/my');
-    const { groups } = await res.json();
+    const [myRes, pubRes] = await Promise.all([
+      fetch('/api/groups/my'),
+      fetch('/api/groups/public')
+    ]);
     
-    const groupsList = groups.map(g => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface2); border-radius: 12px; margin-bottom: 8px;">
+    const { groups: myGroups } = await myRes.json();
+    const { groups: pubGroups } = await pubRes.json();
+    
+    const myGroupsList = myGroups.map(g => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface2); border-radius: 12px; margin-bottom: 8px; border-left: 3px solid #8b5cf6;">
         <div>
           <div style="font-weight: 700; color: var(--text);">${g.name}</div>
           <div style="font-size: 10px; color: var(--muted);">Code: ${g.inviteCode}</div>
         </div>
-        <button onclick="window.joinGroupChat('${g.id}', '${g.name}')" style="background: var(--accent-solid); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">Enter</button>
+        <button onclick="window.joinGroupChat('${g.id}', '${g.name}')" style="background: #8b5cf6; color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">Enter</button>
       </div>
-    `).join('') || '<div style="color: var(--muted); text-align: center; padding: 20px;">No groups yet</div>';
+    `).join('');
+
+    const otherGroups = pubGroups.filter(pg => !myGroups.some(mg => mg.id === pg.id));
+    const pubGroupsList = otherGroups.map(g => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;">
+        <div>
+          <div style="font-weight: 700; color: var(--text); opacity: 0.8;">${g.name}</div>
+          <div style="font-size: 10px; color: var(--muted);">Public Discovery</div>
+        </div>
+        <button onclick="window.promptJoinCode('${g.id}', '${g.name}')" style="background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">Join</button>
+      </div>
+    `).join('');
     
     const content = `
       <div style="display: flex; flex-direction: column; gap: 20px;">
-        <div style="max-height: 200px; overflow-y: auto;">${groupsList}</div>
-        <div style="height: 1px; background: var(--border);"></div>
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="g-name" placeholder="Group Name" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
-          <button id="create-group" style="background: #10b981; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Create</button>
+        <div>
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">My Groups</div>
+          <div style="max-height: 150px; overflow-y: auto;">${myGroupsList || '<div style="color: var(--muted); font-size: 12px; padding: 10px;">No joined groups</div>'}</div>
         </div>
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="g-code" placeholder="Invite Code" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
-          <button id="join-group" style="background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Join</button>
+
+        <div>
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">Discover Public Groups</div>
+          <div style="max-height: 150px; overflow-y: auto;">${pubGroupsList || '<div style="color: var(--muted); font-size: 12px; padding: 10px;">No other groups found</div>'}</div>
+        </div>
+
+        <div style="height: 1px; background: var(--border);"></div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="g-name" placeholder="New Group Name" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+            <button id="create-group" style="background: #10b981; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Create</button>
+          </div>
+          <div style="font-size: 10px; color: var(--muted); text-align: center;">Or join with code manually:</div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="g-code" placeholder="Invite Code" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+            <button id="join-group-btn" style="background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Join</button>
+          </div>
         </div>
       </div>
     `;
@@ -439,10 +467,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
       });
-      if (res.ok) window.location.reload();
+      if (res.ok) {
+        modal.remove();
+        window.openGroupsModal();
+      }
     };
     
-    modal.querySelector('#join-group').onclick = async () => {
+    modal.querySelector('#join-group-btn').onclick = async () => {
       const inviteCode = modal.querySelector('#g-code').value;
       if (!inviteCode) return;
       const res = await fetch('/api/groups/join', {
@@ -450,8 +481,30 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ inviteCode })
       });
-      if (res.ok) window.location.reload();
+      if (res.ok) {
+        modal.remove();
+        window.openGroupsModal();
+      } else {
+        alert('Invalid Invite Code');
+      }
     };
+  };
+
+  window.promptJoinCode = (groupId, groupName) => {
+    const code = prompt(`Enter invite code to join "${groupName}":`);
+    if (code) {
+      fetch('/api/groups/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteCode: code })
+      }).then(res => res.json()).then(data => {
+        if (data.success) {
+          window.joinGroupChat(groupId, groupName);
+        } else {
+          alert('Incorrect code for this group!');
+        }
+      });
+    }
   };
 
   // Global window function for entering group chat
