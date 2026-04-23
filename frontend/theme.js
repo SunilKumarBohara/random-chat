@@ -424,9 +424,9 @@
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px;">
         <div>
           <div style="font-weight: 700; color: var(--text); opacity: 0.8;">${g.name}</div>
-          <div style="font-size: 10px; color: var(--muted);">Public Discovery</div>
+          <div style="font-size: 10px; color: var(--muted);">${g.isPublic ? '<span style="color: #10b981;">● Public</span>' : '<span style="color: #f59e0b;">● Private</span>'}</div>
         </div>
-        <button onclick="window.promptJoinCode('${g.id}', '${g.name}')" style="background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">Join</button>
+        <button onclick="window.handleGroupJoinClick('${g.id}', '${g.name}', ${g.isPublic})" style="background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;">${g.isPublic ? 'Enter' : 'Join'}</button>
       </div>
     `).join('');
     
@@ -434,25 +434,34 @@
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <div>
           <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">My Groups</div>
-          <div style="max-height: 150px; overflow-y: auto;">${myGroupsList || '<div style="color: var(--muted); font-size: 12px; padding: 10px;">No joined groups</div>'}</div>
+          <div style="max-height: 120px; overflow-y: auto;">${myGroupsList || '<div style="color: var(--muted); font-size: 12px; padding: 10px;">No joined groups</div>'}</div>
         </div>
 
         <div>
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">Discover Public Groups</div>
-          <div style="max-height: 150px; overflow-y: auto;">${pubGroupsList || '<div style="color: var(--muted); font-size: 12px; padding: 10px;">No other groups found</div>'}</div>
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">Discover Groups</div>
+          <div style="max-height: 120px; overflow-y: auto;">${pubGroupsList || '<div style="color: var(--muted); font-size: 12px; padding: 10px;">No other groups found</div>'}</div>
         </div>
 
         <div style="height: 1px; background: var(--border);"></div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="g-name" placeholder="New Group Name" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
-            <button id="create-group" style="background: #10b981; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Create</button>
-          </div>
-          <div style="font-size: 10px; color: var(--muted); text-align: center;">Or join with code manually:</div>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="g-code" placeholder="Invite Code" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
-            <button id="join-group-btn" style="background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Join</button>
-          </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">Create New Group</div>
+          <input type="text" id="g-name" placeholder="Group Name" style="width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+          <input type="text" id="g-custom-code" placeholder="Invite Code (Optional)" style="width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+          
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: var(--text);">
+            <input type="checkbox" id="g-is-public" style="width: 16px; height: 16px;"> 
+            <span>Make this group Public (No code needed to enter)</span>
+          </label>
+
+          <button id="create-group" style="background: #10b981; color: white; border: none; border-radius: 10px; padding: 12px; font-weight: 700; cursor: pointer; width: 100%;">Create Group</button>
+        </div>
+
+        <div style="text-align: center; font-size: 11px; color: var(--muted);">— OR —</div>
+
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="g-code" placeholder="Enter Invite Code" style="flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); outline: none;">
+          <button id="join-group-btn" style="background: #3b82f6; color: white; border: none; border-radius: 10px; padding: 10px 15px; font-weight: 700; cursor: pointer;">Join</button>
         </div>
       </div>
     `;
@@ -461,11 +470,15 @@
     
     modal.querySelector('#create-group').onclick = async () => {
       const name = modal.querySelector('#g-name').value;
-      if (!name) return;
+      const inviteCode = modal.querySelector('#g-custom-code').value;
+      const isPublic = modal.querySelector('#g-is-public').checked;
+      
+      if (!name) return alert('Please enter a group name');
+      
       const res = await fetch('/api/groups/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ name, inviteCode, isPublic })
       });
       if (res.ok) {
         modal.remove();
@@ -490,13 +503,30 @@
     };
   };
 
+  window.handleGroupJoinClick = async (groupId, groupName, isPublic) => {
+    if (isPublic) {
+      // Auto-join public group
+      const res = await fetch('/api/groups/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId })
+      });
+      if (res.ok) {
+        window.joinGroupChat(groupId, groupName);
+      }
+    } else {
+      // Prompt for code if private
+      window.promptJoinCode(groupId, groupName);
+    }
+  };
+
   window.promptJoinCode = (groupId, groupName) => {
-    const code = prompt(`Enter invite code to join "${groupName}":`);
+    const code = prompt(`Enter invite code to join private group "${groupName}":`);
     if (code) {
       fetch('/api/groups/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteCode: code })
+        body: JSON.stringify({ groupId, inviteCode: code })
       }).then(res => res.json()).then(data => {
         if (data.success) {
           window.joinGroupChat(groupId, groupName);

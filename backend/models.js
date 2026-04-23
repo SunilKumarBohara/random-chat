@@ -49,6 +49,10 @@ const Group = sequelize.define('Group', {
     type: DataTypes.STRING,
     unique: true
   },
+  isPublic: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   creatorId: {
     type: DataTypes.INTEGER,
     allowNull: false

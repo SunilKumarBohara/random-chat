@@ -285,9 +285,15 @@ app.post('/api/profile/update', isAuthenticated, async (req, res) => {
 // --- GROUP ROUTES ---
 app.post('/api/groups/create', isAuthenticated, async (req, res) => {
   try {
-    const { name } = req.body;
-    const inviteCode = uuidv4().split('-')[0].toUpperCase();
-    const group = await Group.create({ name, inviteCode, creatorId: req.session.userId });
+    const { name, inviteCode, isPublic } = req.body;
+    const finalCode = inviteCode ? inviteCode.toUpperCase() : uuidv4().split('-')[0].toUpperCase();
+    
+    const group = await Group.create({ 
+      name, 
+      inviteCode: finalCode, 
+      isPublic: !!isPublic,
+      creatorId: req.session.userId 
+    });
     await GroupMember.create({ groupId: group.id, userId: req.session.userId });
     res.json({ success: true, group });
   } catch (e) {
@@ -297,9 +303,21 @@ app.post('/api/groups/create', isAuthenticated, async (req, res) => {
 
 app.post('/api/groups/join', isAuthenticated, async (req, res) => {
   try {
-    const { inviteCode } = req.body;
-    const group = await Group.findOne({ where: { inviteCode } });
+    const { inviteCode, groupId } = req.body;
+    let group;
+    
+    if (groupId) {
+      group = await Group.findByPk(groupId);
+    } else if (inviteCode) {
+      group = await Group.findOne({ where: { inviteCode: inviteCode.toUpperCase() } });
+    }
+
     if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    // If private and code doesn't match
+    if (!group.isPublic && group.inviteCode !== inviteCode?.toUpperCase()) {
+      return res.status(403).json({ error: 'Invalid invite code' });
+    }
 
     const existing = await GroupMember.findOne({ where: { groupId: group.id, userId: req.session.userId } });
     if (existing) return res.json({ success: true, group, alreadyMember: true });
@@ -325,7 +343,7 @@ app.get('/api/groups/my', isAuthenticated, async (req, res) => {
 app.get('/api/groups/public', async (req, res) => {
   try {
     const groups = await Group.findAll({
-      attributes: ['id', 'name', 'createdAt'] // Don't send inviteCode here for security
+      attributes: ['id', 'name', 'isPublic', 'createdAt'] 
     });
     res.json({ groups });
   } catch (e) {
