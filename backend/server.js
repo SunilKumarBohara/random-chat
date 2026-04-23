@@ -110,9 +110,11 @@ function getPartner(socketId) {
   return activePairs.get(socketId);
 }
 
-// Generate anonymous user ID
-function getAnonymousUserId(socket) {
+// Get persistent ID (UserId if logged in, else AnonymousId)
+function getPersistentId(socket) {
   const session = socket.request.session;
+  if (session.userId) return `u_${session.userId}`;
+  
   if (!session.anonymousId) {
     session.anonymousId = uuidv4();
     session.save();
@@ -123,11 +125,11 @@ function getAnonymousUserId(socket) {
 // Match finding logic - separated by mode
 function findMatch(socket, data) {
   const { nickname, gender, pref, age, interests = [], mode = 'text', country = null } = data;
-  const anonymousId = getAnonymousUserId(socket);
+  const persistentId = getPersistentId(socket);
 
   // Store user session data
   userSessions.set(socket.id, {
-    anonymousId,
+    persistentId,
     nickname,
     gender,
     pref,
@@ -156,11 +158,11 @@ function findMatch(socket, data) {
   let matchIndex = waitingList.findIndex(u => {
     if (u.id === socket.id) return false;
 
-    const uAnonId = userSessions.get(u.id)?.anonymousId;
-    const socketAnonId = anonymousId;
+    const uId = userSessions.get(u.id)?.persistentId;
+    const mySocketId = persistentId;
 
-    if (blockedUsers.get(socketAnonId)?.has(uAnonId)) return false;
-    if (blockedUsers.get(uAnonId)?.has(socketAnonId)) return false;
+    if (blockedUsers.get(mySocketId)?.has(uId)) return false;
+    if (blockedUsers.get(uId)?.has(mySocketId)) return false;
 
     const iWant = pref === 'anyone' || pref === u.gender;
     const theyWant = u.pref === 'anyone' || u.pref === gender;
@@ -409,11 +411,11 @@ io.on('connection', (socket) => {
   onlineCount++;
   io.emit('online-count', onlineCount);
 
-  const anonymousId = getAnonymousUserId(socket);
-  console.log(`🔌 Connected: ${socket.id} (AnonID: ${anonymousId}, Online: ${onlineCount})`);
+  const persistentId = getPersistentId(socket);
+  console.log(`🔌 Connected: ${socket.id} (ID: ${persistentId}, Online: ${onlineCount})`);
 
   // Send session data to client
-  socket.emit('session', { anonymousId });
+  socket.emit('session', { persistentId });
 
   // App-level heartbeat (in addition to Socket.IO transport ping/pong)
   socket.on('app-ping', ({ ts } = {}) => {
@@ -538,11 +540,11 @@ io.on('connection', (socket) => {
   socket.on('report-partner', () => {
     const partnerId = getPartner(socket.id);
     if (partnerId) {
-      const partnerAnonId = userSessions.get(partnerId)?.anonymousId;
-      const myAnonId = anonymousId;
+      const partnerIdStr = userSessions.get(partnerId)?.persistentId;
+      const myIdStr = persistentId;
 
-      if (!blockedUsers.has(myAnonId)) blockedUsers.set(myAnonId, new Set());
-      blockedUsers.get(myAnonId).add(partnerAnonId);
+      if (!blockedUsers.has(myIdStr)) blockedUsers.set(myIdStr, new Set());
+      blockedUsers.get(myIdStr).add(partnerIdStr);
 
       io.to(partnerId).emit('partner-left', { reason: 'reported' });
       activePairs.delete(partnerId);
@@ -554,11 +556,11 @@ io.on('connection', (socket) => {
   socket.on('block-partner', () => {
     const partnerId = getPartner(socket.id);
     if (partnerId) {
-      const partnerAnonId = userSessions.get(partnerId)?.anonymousId;
-      const myAnonId = anonymousId;
+      const partnerIdStr = userSessions.get(partnerId)?.persistentId;
+      const myIdStr = persistentId;
 
-      if (!blockedUsers.has(myAnonId)) blockedUsers.set(myAnonId, new Set());
-      blockedUsers.get(myAnonId).add(partnerAnonId);
+      if (!blockedUsers.has(myIdStr)) blockedUsers.set(myIdStr, new Set());
+      blockedUsers.get(myIdStr).add(partnerIdStr);
 
       io.to(partnerId).emit('partner-left', { reason: 'blocked' });
       activePairs.delete(partnerId);

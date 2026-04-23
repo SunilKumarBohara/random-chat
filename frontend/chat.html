@@ -1125,7 +1125,9 @@
     });
 
     socket.on('session', (data) => {
-      anonymousId = data.anonymousId;
+      persistentId = data.persistentId;
+      localStorage.setItem('persistentId', persistentId);
+      console.log('Session established:', persistentId);
     });
 
     // --- GROUP SOCKET HANDLERS ---

@@ -83,6 +83,7 @@
   async function checkAuth() {
     try {
       const res = await fetch('/api/auth/me');
+      if (!res.ok) return null;
       const data = await res.json();
       currentUser = data.user;
       return currentUser;

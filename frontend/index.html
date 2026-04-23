@@ -586,8 +586,8 @@
     });
 
     socket.on('session', (data) => {
-      anonymousId = data.anonymousId;
-      localStorage.setItem('anonymousId', anonymousId);
+      persistentId = data.persistentId;
+      localStorage.setItem('persistentId', persistentId);
       // Load saved preferences if any
       loadSavedPreferences();
     });
