@@ -1168,20 +1168,12 @@
 
       addSystemMessage(messages[reason] || messages.disconnected);
 
-      document.getElementById('blockBtn').style.display = 'none';
-      document.getElementById('reportBtn').style.display = 'none';
-
-      // Reset UI
-      document.getElementById('partnerName').textContent = 'Finding partner...';
-      document.getElementById('partnerDetails').style.display = 'none';
-      document.getElementById('statusText').textContent = 'Disconnected';
-      document.getElementById('statusDot').classList.remove('online');
-
-
-      // Clear session storage
-      sessionStorage.removeItem('currentPartner');
-
-      // User stays on screen to read messages until they click "Next"
+      // Immediately clear chat and start matching for the other user as well
+      setTimeout(() => {
+        document.getElementById('messagesArea').innerHTML = '';
+        messageHistory = [];
+        startMatching();
+      }, 500);
     });
 
     socket.on('disconnected-next', () => {
