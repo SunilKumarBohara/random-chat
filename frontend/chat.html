@@ -650,27 +650,28 @@
         max-width: 85%;
       }
 
-      .header-actions .header-btn span {
+      .header-actions {
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .header-actions::-webkit-scrollbar {
         display: none;
       }
 
       .header-btn {
-        padding: 8px 12px;
-        min-width: 44px;
-        min-height: 44px;
+        padding: 6px 10px;
+        font-size: 12px;
+        flex-shrink: 0;
       }
 
-      .premium-card {
-        padding: 24px;
-        margin: 20px;
+      .header-btn span {
+        display: inline;
+        font-size: 11px;
       }
-
-      .call-controls {
-        gap: 10px;
-        padding: 12px;
-      }
-
-    }
 
     @media (max-width: 480px) {
       .header {
@@ -678,37 +679,22 @@
       }
 
       .input-area {
-        padding: 10px 12px;
-        position: sticky;
-        bottom: 0;
-        background: var(--surface);
-        z-index: 50;
+        padding: 8px 12px;
+        gap: 8px;
       }
 
-      .messages-area {
-        padding: 12px;
+      .message-input {
+        font-size: 14px;
+        padding: 10px 14px;
       }
 
-      .recording-ui {
-        padding: 10px 16px;
-        bottom: 70px;
+      .send-btn span {
+        display: none;
       }
 
-      .call-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
-      }
-
-      .input-btn,
       .send-btn {
+        padding: 10px;
         min-width: 44px;
-        min-height: 44px;
-      }
-
-
-      .chat-main {
-        padding-bottom: 72px;
       }
     }
 

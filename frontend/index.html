@@ -426,20 +426,34 @@
     }
 
     @media (max-width: 480px) {
-      .form-grid {
-        gap: 10px;
+      .container {
+        padding: 10px;
       }
 
       .glass-card {
-        padding: 20px 16px;
+        padding: 16px;
       }
 
-      .header {
-        margin-bottom: 16px;
+      .title-area h1 {
+        font-size: 20px;
+      }
+
+      .title-area p {
+        font-size: 11px;
       }
 
       .selector-item {
-        font-size: 11px;
+        padding: 8px 10px;
+        font-size: 10px;
+      }
+
+      .footer-row {
+        flex-direction: column;
+      }
+
+      .loc-tag, .start-btn {
+        width: 100%;
+        min-width: unset;
       }
     }
   </style>
